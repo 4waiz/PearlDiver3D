@@ -3,46 +3,113 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pearl Diver 3D — UAE Heritage</title>
+  <title>Heritage Pearl Quest 3D</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <canvas id="bg"></canvas>
+
   <div id="ui">
-    <div id="topbar" class="glass">
-      <div><strong>Time:</strong> <span id="time">05:00</span></div>
-      <div><strong>O₂:</strong> <span id="oxygen">100%</span></div>
-      <div><strong>Score:</strong> <span id="score">0</span></div>
-      <div><strong>Bank x</strong><span id="mult">1.0</span></div>
+    <!-- TOP HUD -->
+    <div id="hud" class="glass hidden">
+      <div class="hud-item"><strong>Time</strong> <span id="time">05:00</span></div>
+      <div class="hud-item"><strong>O₂</strong> <span id="oxygen">100%</span></div>
+      <div class="hud-item"><strong>Score</strong> <span id="score">0</span></div>
+      <div class="hud-item"><strong>Bank</strong> x<span id="mult">1.0</span></div>
+      <div class="hud-item"><strong>Carried</strong> <span id="carried">0</span></div>
     </div>
 
     <div id="crosshair">+</div>
 
-    <div id="startScreen" class="panel glass">
-      <h1>PEARL DIVER 3D</h1>
-      <h2>UAE Heritage — Dive for Pearls</h2>
-      <p>Move with <b>WASD</b>, ascend <b>Space</b>, descend <b>Ctrl</b>, boost <b>Shift</b>.<br/>
-      Collect with <b>E</b>. Avoid jellyfish. Return to the dhow to bank pearls & refill oxygen.</p>
-      <button id="startBtn">Enter the Dive</button>
-      <div class="small">Tip: click to lock the mouse (FPS controls). Press <b>P</b> to pause.</div>
+    <!-- MAIN MENU -->
+    <div id="menu" class="panel glass">
+      <h1>Heritage Pearl Quest 3D</h1>
+      <h2>Innovate Your Heritage Game</h2>
+      <p class="tag">Reviving Emirati pearling culture through play.</p>
+      <div class="buttons">
+        <button id="btnStory">Start Story</button>
+        <button id="btnAdventure">Free Dive (Score)</button>
+        <button id="btnHow">How to Play</button>
+        <button id="btnLeaderboard">Leaderboard</button>
+        <button id="btnSettings">Settings</button>
+        <button id="btnCredits">Credits</button>
+      </div>
     </div>
 
-    <div id="pauseScreen" class="panel glass hidden">
+    <!-- PAUSE -->
+    <div id="pause" class="panel glass hidden">
       <h2>Paused</h2>
-      <p>Press <b>P</b> to resume.</p>
+      <div class="buttons">
+        <button id="resumeBtn">Resume</button>
+        <button id="restartBtn">Restart</button>
+        <button id="menuBtn">Main Menu</button>
+      </div>
+      <p class="hint">Press <b>P</b> to toggle pause.</p>
     </div>
 
-    <div id="gameOver" class="panel glass hidden">
-      <h2>Time!</h2>
-      <p>Your score: <span id="finalScore">0</span></p>
-      <input id="playerName" placeholder="Enter your name (e.g., Awaiz Ahmed)"/>
-      <button id="saveBtn">Save to Leaderboard</button>
-      <button id="restartBtn">Play Again</button>
-      <h3>Top Divers</h3>
+    <!-- HOW TO -->
+    <div id="how" class="panel glass hidden">
+      <h2>How to Play</h2>
+      <ul class="how">
+        <li><b>WASD</b> swim • <b>Space/Ctrl</b> ascend/descend • <b>Shift</b> boost</li>
+        <li><b>E</b> interact: collect pearls / artifacts / bank at the dhow</li>
+        <li><b>P</b> pause • <b>M</b> mute • <b>F</b> fullscreen</li>
+        <li>Manage oxygen and avoid jellyfish stings.</li>
+      </ul>
+      <button class="back">Back</button>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="settings" class="panel glass hidden">
+      <h2>Settings</h2>
+      <div class="row">
+        <label>Mouse sensitivity</label>
+        <input id="sens" type="range" min="0.2" max="1.6" step="0.05" value="1"/>
+      </div>
+      <div class="row">
+        <label>Music</label>
+        <button id="muteBtn">Mute/Unmute (M)</button>
+      </div>
+      <div class="row">
+        <label>Graphics</label>
+        <button id="hqBtn">Toggle High Quality</button>
+      </div>
+      <button class="back">Back</button>
+    </div>
+
+    <!-- LEADERBOARD -->
+    <div id="board" class="panel glass hidden">
+      <h2>Top Divers</h2>
       <ol id="leaders"></ol>
+      <button class="back">Back</button>
+    </div>
+
+    <!-- CREDITS -->
+    <div id="credits" class="panel glass hidden">
+      <h2>Credits</h2>
+      <p><b>Design & Development:</b> Awaiz Ahmed — Software Engineering Student</p>
+      <p>Built for the competition: <b>“Innovate Your Heritage Game”</b></p>
+      <p>Goal: Revive Emirati heritage in an innovative, student‑led experience.</p>
+      <button class="back">Back</button>
+    </div>
+
+    <!-- STORY PROMPTS -->
+    <div id="prompt" class="panel glass hidden small"></div>
+
+    <!-- GAME OVER -->
+    <div id="over" class="panel glass hidden">
+      <h2>Mission Complete</h2>
+      <p id="overMsg">Your score: <span id="finalScore">0</span></p>
+      <div class="save">
+        <input id="playerName" placeholder="Enter your name (e.g., Awaiz Ahmed)"/>
+        <button id="saveBtn">Save to Leaderboard</button>
+      </div>
+      <div class="buttons">
+        <button id="again">Play Again</button>
+        <button class="back">Main Menu</button>
+      </div>
     </div>
   </div>
-
-  <canvas id="bg"></canvas>
 
   <script type="module" src="main.js"></script>
 </body>
