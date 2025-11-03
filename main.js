@@ -57,7 +57,7 @@ renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = false;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x041824);
+scene.background = new THREE.Color(0x041824); // will be overridden by heritage palette later
 scene.fog = new THREE.FogExp2(0x0b2a45, 0.012);
 
 const camera = new THREE.PerspectiveCamera(70, innerWidth/innerHeight, 0.1, 2000);
@@ -352,6 +352,55 @@ function toggleFS(){ if(!document.fullscreenElement) document.body.requestFullsc
 
 // -------------------- Resize --------------------
 addEventListener('resize', ()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
+
+
+// === Heritage palette ===
+const PALETTE = { teal:0x156a75, deep:0x052129, sand:0xe6c88f, wood:0x7a5533, coral:0xe76f51, date:0x1e6f5c, pearl:0xf6f5f3 };
+
+// Register canvas click to lock pointer robustly
+canvas.addEventListener('click', ()=>{
+  if(!controls.isLocked && state.running && !state.paused){
+    controls.lock();
+  }
+});
+document.addEventListener('mousedown', (e)=>{
+  if(!controls.isLocked && state.running && !state.paused){
+    controls.lock();
+  }
+});
+
+// Update base scene colors
+scene.background = new THREE.Color(PALETTE.deep);
+scene.fog = new THREE.FogExp2(0x0b3c4a, 0.010);
+
+// Tinted god rays (warmer)
+rayMat.color = new THREE.Color(0xffe9a3);
+rayMat.opacity = 0.05;
+
+// Gold-tinted caustics
+caustics.material.color = new THREE.Color(PALETTE.sand);
+caustics.material.opacity = 0.08;
+
+// Dhow wood tone
+hull.material.color = new THREE.Color(PALETTE.wood);
+
+// Add coral clusters for more color
+const coralGroup = new THREE.Group(); scene.add(coralGroup);
+for(let i=0;i<60;i++){
+  const col = (i%2===0)? 0xe76f51 : 0xf4a261;
+  const geo = new THREE.ConeGeometry( rand(0.6,1.2), rand(1.2,2.4), 6 );
+  const mat = new THREE.MeshPhongMaterial({ color: col, emissive: 0x240a05, shininess: 16 });
+  const c = new THREE.Mesh(geo, mat);
+  c.position.set(rand(-520,520), -33, rand(-520,520));
+  c.rotation.x = -Math.PI/2 * 0.02;
+  coralGroup.add(c);
+}
+
+// More vivid kelp
+kelp.children.forEach(k => { k.material.color = new THREE.Color(PALETTE.date); });
+
+// Warmer pearl glow
+pearls.forEach(p => { if (p.material) { p.material.emissive = new THREE.Color(0xaa8844); p.material.color = new THREE.Color(0xffffff); } });
 
 // -------------------- Startup --------------------
 showPanel(menu);
