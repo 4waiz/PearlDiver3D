@@ -65,6 +65,12 @@ camera.position.set(0,6,60);
 const controls = new PointerLockControls(camera, document.body);
 scene.add(controls.getObject());
 
+// Robust click-to-lock fallback
+document.addEventListener('mousedown', ()=>{
+  if(state.running && !state.paused && !controls.isLocked){ controls.lock(); }
+});
+
+
 // lighting
 const hemi = new THREE.HemisphereLight(0xcde8ff, 0x416d66, 0.95); scene.add(hemi);
 const dir = new THREE.DirectionalLight(0xffffff, 0.7); dir.position.set(120,220,80); scene.add(dir);
@@ -371,3 +377,6 @@ addEventListener('resize', ()=>{ camera.aspect=innerWidth/innerHeight; camera.up
 // -------------------- Startup --------------------
 showPanel(menu);
 populateLeaders();
+
+// Kick off render loop
+animate();
