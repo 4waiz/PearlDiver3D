@@ -53,6 +53,22 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = false;
+// --- Water mode (under/above) ---
+const COLORS = { sky: 0x74b6e3, fogSky: 0x84c2e3, deep: 0x052129, fogDeep: 0x0b3c4a };
+function setWaterMode(under){
+  if(under){
+    scene.background.set(COLORS.deep);
+    scene.fog.color.set(COLORS.fogDeep);
+    scene.fog.density = 0.010;
+    hemi.intensity = 0.65;
+  } else {
+    scene.background.set(COLORS.sky);
+    scene.fog.color.set(COLORS.fogSky);
+    scene.fog.density = 0.0025;
+    hemi.intensity = 0.95;
+  }
+}
+
 
 const scene = new THREE.Scene();
 const UNDERWATER_BG = 0x052129;
@@ -82,7 +98,7 @@ const sky = new THREE.Mesh(skyGeo, skyMat); scene.add(sky);
 
 // Water surface with waves
 const waterGeo = new THREE.PlaneGeometry(2000, 2000, 200, 200);
-const waterMat = new THREE.MeshPhongMaterial({ color: 0x2dc2c7, transparent:true, opacity:0.35, side:THREE.DoubleSide });
+const waterMat = new THREE.MeshPhongMaterial({ color: 0x1a7b90, transparent:true, opacity:0.55, side:THREE.DoubleSide, shininess:30, specular:0x99ddee });
 const water = new THREE.Mesh(waterGeo, waterMat); water.rotation.x = -Math.PI/2; water.position.y = 0; scene.add(water);
 
 // Underwater caustics ground
@@ -101,6 +117,19 @@ const islandMat = new THREE.MeshPhongMaterial({ color:0xd6c29a });
 const islandMesh = new THREE.Mesh(islandGeo, islandMat);
 islandMesh.rotation.x = -Math.PI/2; islandMesh.position.y = 3.2; island.add(islandMesh);
 for (let i=0;i<14;i++){ const palm = makePalm(); const r = 50 + Math.random()*20, a = Math.random()*Math.PI*2; palm.position.set(Math.cos(a)*r, 3.2, Math.sin(a)*r); island.add(palm); }
+
+// Grass tufts on island
+const grass = new THREE.Group(); island.add(grass);
+for(let i=0;i<120;i++){ 
+  const r = 10 + Math.random()*65, a = Math.random()*Math.PI*2;
+  const tuft = new THREE.Mesh(new THREE.ConeGeometry(0.5,1.4,6), new THREE.MeshLambertMaterial({ color:0x1e6f5c }));
+  tuft.position.set(Math.cos(a)*r, 3.25, Math.sin(a)*r);
+  grass.add(tuft);
+}
+
+// Shoreline foam
+const foamRing = new THREE.Mesh(new THREE.RingGeometry(82, 86, 128), new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0.25, side:THREE.DoubleSide }));
+foamRing.rotation.x = -Math.PI/2; foamRing.position.y = 0.2; scene.add(foamRing);
 
 // Dhow near shore
 const dhow = new THREE.Group();
@@ -269,8 +298,8 @@ const vel = new THREE.Vector3();
 function step(dt){
   const speed = (keys['ShiftLeft']||keys['ShiftRight'])?28:16;
   vel.set(0,0,0);
-  if(keys['KeyW']) vel.z -= 1;
-  if(keys['KeyS']) vel.z += 1;
+  if(keys['KeyW']) vel.z += 1;
+  if(keys['KeyS']) vel.z -= 1;
   if(keys['KeyA']) vel.x -= 1;
   if(keys['KeyD']) vel.x += 1;
   if(keys['Space']) vel.y += 1;
@@ -287,6 +316,7 @@ function step(dt){
 
   // oxygen: drains only underwater
   const underwater = controls.getObject().position.y < 0;
+  setWaterMode(underwater);
   if (underwater) {
     state.oxy -= (0.012*(keys['ShiftLeft']||keys['ShiftRight']?1.8:1))*dt*60;
     maybeBubble(controls.getObject().position);
@@ -365,7 +395,7 @@ function rand(a,b){ return a + Math.random()*(b-a); }
 function noise2(x,y){ return (Math.sin(x*2.1+Math.sin(y*1.3))*0.5 + Math.sin(y*2.7+Math.sin(x*0.7))*0.5); }
 function displacePlane(geom, fn){ geom.computeBoundingBox(); const pos=geom.attributes.position; for(let i=0;i<pos.count;i++){ const x=pos.getX(i), z=pos.getZ(i); pos.setY(i, fn(x,z)); } pos.needsUpdate=true; geom.computeVertexNormals(); }
 function makeKelp(){ const g=new THREE.CapsuleGeometry(0.3,6,3,6); const m=new THREE.MeshLambertMaterial({ color:0x1e6f5c }); const b=new THREE.Mesh(g,m); b.scale.set(1, rand(1,2.5), 1); b.rotation.z = rand(-0.5,0.5); return b; }
-function makePalm(){ const grp=new THREE.Group(); const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.6,10,8), new THREE.MeshPhongMaterial({ color:0x7a5533 })); trunk.position.y=8; grp.add(trunk); for(let i=0;i<6;i++){ const leaf=new THREE.Mesh(new THREE.PlaneGeometry(6,2), new THREE.MeshLambertMaterial({ color:0x1e6f5c, side:THREE.DoubleSide })); leaf.position.set(0,13,0); leaf.rotation.set(0, i*Math.PI/3, -Math.PI/6); grp.add(leaf);} return grp; }
+function makePalm(){ const grp=new THREE.Group(); const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.6,10,8), new THREE.MeshPhongMaterial({ color:0x7a5533 })); trunk.position.y=3.2+5; grp.add(trunk); for(let i=0;i<6;i++){ const leaf=new THREE.Mesh(new THREE.PlaneGeometry(6,2), new THREE.MeshLambertMaterial({ color:0x1e6f5c, side:THREE.DoubleSide })); leaf.position.set(0,13,0); leaf.rotation.set(0, i*Math.PI/3, -Math.PI/6); grp.add(leaf);} return grp; }
 function makeJelly(){ const g=new THREE.Group(); const bell=new THREE.Mesh(new THREE.SphereGeometry(1.4,16,16), new THREE.MeshPhongMaterial({ color:0xbf80ff, emissive:0x442266, shininess:60 })); g.add(bell); const mat=new THREE.LineBasicMaterial({ color:0xd2a0ff }); for(let i=0;i<6;i++){ const geo=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(rand(-0.6,0.6), -2.4-rand(0,1), rand(-0.6,0.6))]); g.add(new THREE.Line(geo,mat)); } return g; }
 function makeFish(){ const g=new THREE.ConeGeometry(0.6, 1.8, 8); const m=new THREE.MeshLambertMaterial({ color: (Math.random()<0.5? 0xf4a261:0x2bc4ad) }); const f=new THREE.Mesh(g,m); f.rotation.x = Math.PI/2; f.position.set(rand(-900,900), -18, rand(-900,900)); f.userData.speed = rand(0.5,1.4); f.userData.a=Math.random()*6.28; return f; }
 function genCaustics(w,h){ const data=new Uint8Array(w*h*4); let idx=0; for(let y=0;y<h;y++){ for(let x=0;x<w;x++){ const n=(Math.sin(x*0.2)+Math.sin(y*0.27)+Math.sin((x+y)*0.13))*0.33; const v=Math.max(0,Math.min(255,180+n*70)); data[idx++]=v; data[idx++]=v; data[idx++]=255; data[idx++]=255; } } return data; }
