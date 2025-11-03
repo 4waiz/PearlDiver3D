@@ -51,6 +51,9 @@ const hud = qs('#hud');
 const timeEl=qs('#time'), scoreEl=qs('#score'), multEl=qs('#mult'), carriedEl=qs('#carried');
 const oxyFill = qs('#o2fill'), questChip=qs('#quest');
 const menu=qs('#menu'), pauseP=qs('#pause'), how=qs('#how'), settings=qs('#settings'), board=qs('#board'), credits=qs('#credits'), prompt=qs('#prompt'), over=qs('#over'), cinema=qs('#cinema'), fade=qs('#fade');
+
+function btn(sel, fn){ qs(sel).addEventListener('click', fn); } // <<< FIX: This function was missing
+
 btn('#btnAdventure', startAdventure);
 btn('#btnStory', startStory);
 btn('#btnHow', ()=> showPanel(how));
