@@ -51,9 +51,7 @@ const hud = qs('#hud');
 const timeEl=qs('#time'), scoreEl=qs('#score'), multEl=qs('#mult'), carriedEl=qs('#carried');
 const oxyFill = qs('#o2fill'), questChip=qs('#quest');
 const menu=qs('#menu'), pauseP=qs('#pause'), how=qs('#how'), settings=qs('#settings'), board=qs('#board'), credits=qs('#credits'), prompt=qs('#prompt'), over=qs('#over'), cinema=qs('#cinema'), fade=qs('#fade');
-
-function btn(sel, fn){ qs(sel).addEventListener('click', fn); } // <<< FIX: This function was missing
-
+function btn(sel, fn){ qs(sel).addEventListener('click', fn); }
 btn('#btnAdventure', startAdventure);
 btn('#btnStory', startStory);
 btn('#btnHow', ()=> showPanel(how));
@@ -122,7 +120,8 @@ const sky = new THREE.Mesh(skyGeo, skyMat); scene.add(sky);
 
 // Water
 const waterGeo = new THREE.PlaneGeometry(4000, 4000, 240, 240);
-const waterMat = new THREE.MeshPhongMaterial({ color: 0x1a7b90, transparent:true, opacity:0.55, side:THREE.DoubleSide, shininess:30, specular:0x99ddee });
+// FIX: Make water more visible with better color, opacity, and shininess
+const waterMat = new THREE.MeshPhongMaterial({ color: 0x22a2b8, transparent:true, opacity:0.85, side:THREE.DoubleSide, shininess:80, specular:0xefefef });
 const water = new THREE.Mesh(waterGeo, waterMat); water.rotation.x = -Math.PI/2; water.position.y = 0; scene.add(water);
 
 // Caustics + seabed
@@ -143,7 +142,7 @@ islandMesh.rotation.x = -Math.PI/2; islandMesh.position.y = 3.2; island.add(isla
 for (let i=0;i<18;i++){ const palm = makePalm(); const r = 75 + Math.random()*35, a = Math.random()*Math.PI*2; palm.position.set(Math.cos(a)*r, 3.2, Math.sin(a)*r); island.add(palm); }
 // grass
 const grass = new THREE.Group(); island.add(grass);
-for(let i=0;i<200;i++){ const r = 10 + Math.random()*105, a = Math.random()*Math.PI*2; const tuft=new THREE.Mesh(new THREE.ConeGeometry(0.5,1.4,6), new THREE.MeshLambertMaterial({ color:0x1e6f5c })); tuft.position.set(Math.cos(a)*r, 3.25, Math.sin(a)*r); grass.add(tuft); }
+for(let i=0;i<200;i++){ const r = 10 + Math.random()*105, a = Math.random()*Math.PI*2; const tuft=new THREE.Mesh(new THREE.ConeGeometry(0.5,1.4,6), new THREE.MeshPhongMaterial({ color:0x1e6f5c, shininess: 5 })); tuft.position.set(Math.cos(a)*r, 3.25, Math.sin(a)*r); grass.add(tuft); }
 
 // shore foam
 const foamRing = new THREE.Mesh(new THREE.RingGeometry(120, 126, 180), new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0.20, side:THREE.DoubleSide }));
@@ -162,7 +161,8 @@ bankRing.rotation.x = Math.PI/2; bankRing.position.set(-30,-6,-200); scene.add(b
 const majlis = new THREE.Group(); island.add(majlis);
 const carpetTex = new THREE.DataTexture(genSadu(256,128),256,128,THREE.RGBAFormat); carpetTex.needsUpdate=true; carpetTex.wrapS=carpetTex.wrapT=THREE.RepeatWrapping;
 const carpet = new THREE.Mesh(new THREE.PlaneGeometry(30,14), new THREE.MeshBasicMaterial({ map:carpetTex, side:THREE.DoubleSide })); carpet.rotation.x=-Math.PI/2; carpet.position.set(25,3.21,8); majlis.add(carpet);
-const canopy = new THREE.Mesh(new THREE.PlaneGeometry(30,14), new THREE.MeshLambertMaterial({ color:0xd9d2be, side:THREE.DoubleSide })); canopy.position.set(25,10,8); canopy.rotation.set(-Math.PI/12,0,0); majlis.add(canopy);
+// FIX: Use Phong material for better lighting on canopy
+const canopy = new THREE.Mesh(new THREE.PlaneGeometry(30,14), new THREE.MeshPhongMaterial({ color:0xd9d2be, side:THREE.DoubleSide, shininess: 5 })); canopy.position.set(25,10,8); canopy.rotation.set(-Math.PI/12,0,0); majlis.add(canopy);
 const poleL = new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.25,14,8), new THREE.MeshPhongMaterial({ color:0x7a5533 })); poleL.position.set(10,7,1); majlis.add(poleL);
 const poleR = poleL.clone(); poleR.position.set(40,7,15); majlis.add(poleR);
 
@@ -449,10 +449,12 @@ function saveScore(){ const name=(document.getElementById('playerName').value||'
 function rand(a,b){ return a + Math.random()*(b-a); }
 function noise2(x,y){ return (Math.sin(x*2.1+Math.sin(y*1.3))*0.5 + Math.sin(y*2.7+Math.sin(x*0.7))*0.5); }
 function displacePlane(geom, fn){ const pos=geom.attributes.position; for(let i=0;i<pos.count;i++){ const x=pos.getX(i), z=pos.getZ(i); pos.setY(i, fn(x,z)); } pos.needsUpdate=true; geom.computeVertexNormals(); }
-function makeKelp(){ const g=new THREE.CapsuleGeometry(0.3,6,3,6); const m=new THREE.MeshLambertMaterial({ color:0x1e6f5c }); const b=new THREE.Mesh(g,m); b.scale.set(1, rand(1,2.5), 1); b.rotation.z = rand(-0.5,0.5); return b; }
-function makePalm(){ const grp=new THREE.Group(); const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.6,10,8), new THREE.MeshPhongMaterial({ color:0x7a5533 })); trunk.position.y=3.2+5; grp.add(trunk); for(let i=0;i<6;i++){ const leaf=new THREE.Mesh(new THREE.PlaneGeometry(6,2), new THREE.MeshLambertMaterial({ color:0x1e6f5c, side:THREE.DoubleSide })); leaf.position.set(0,13,0); leaf.rotation.set(0, i*Math.PI/3, -Math.PI/6); grp.add(leaf);} return grp; }
+// FIX: Use Phong material for better lighting on kelp
+function makeKelp(){ const g=new THREE.CapsuleGeometry(0.3,6,3,6); const m=new THREE.MeshPhongMaterial({ color:0x1e6f5c, shininess: 5 }); const b=new THREE.Mesh(g,m); b.scale.set(1, rand(1,2.5), 1); b.rotation.z = rand(-0.5,0.5); return b; }
+function makePalm(){ const grp=new THREE.Group(); const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.6,10,8), new THREE.MeshPhongMaterial({ color:0x7a5533 })); trunk.position.y=3.2+5; grp.add(trunk); for(let i=0;i<6;i++){ const leaf=new THREE.Mesh(new THREE.PlaneGeometry(6,2), new THREE.MeshPhongMaterial({ color:0x1e6f5c, side:THREE.DoubleSide, shininess: 10 })); leaf.position.set(0,13,0); leaf.rotation.set(0, i*Math.PI/3, -Math.PI/6); grp.add(leaf);} return grp; }
 function makeJelly(){ const g=new THREE.Group(); const bell=new THREE.Mesh(new THREE.SphereGeometry(1.4,16,16), new THREE.MeshPhongMaterial({ color:0xbf80ff, emissive:0x442266, shininess:60 })); g.add(bell); const mat=new THREE.LineBasicMaterial({ color:0xd2a0ff }); for(let i=0;i<6;i++){ const geo=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(rand(-0.6,0.6), -2.4-rand(0,1), rand(-0.6,0.6))]); g.add(new THREE.Line(geo,mat)); } return g; }
-function makeFish(){ const g=new THREE.ConeGeometry(0.6, 1.8, 8); const m=new THREE.MeshLambertMaterial({ color: (Math.random()<0.5? 0xf4a261:0x2bc4ad) }); const f=new THREE.Mesh(g,m); f.rotation.x = Math.PI/2; f.position.set(rand(-1500,1500), -18, rand(-1500,1500)); f.userData.speed = rand(0.5,1.4); f.userData.a=Math.random()*6.28; return f; }
+// FIX: Use Phong material for better lighting on fish
+function makeFish(){ const g=new THREE.ConeGeometry(0.6, 1.8, 8); const m=new THREE.MeshPhongMaterial({ color: (Math.random()<0.5? 0xf4a261:0x2bc4ad), shininess: 20 }); const f=new THREE.Mesh(g,m); f.rotation.x = Math.PI/2; f.position.set(rand(-1500,1500), -18, rand(-1500,1500)); f.userData.speed = rand(0.5,1.4); f.userData.a=Math.random()*6.28; return f; }
 function genCaustics(w,h){ const data=new Uint8Array(w*h*4); let idx=0; for(let y=0;y<h;y++){ for(let x=0;x<w;x++){ const n=(Math.sin(x*0.2)+Math.sin(y*0.27)+Math.sin((x+y)*0.13))*0.33; const v=Math.max(0,Math.min(255,180+n*70)); data[idx++]=v; data[idx++]=v; data[idx++]=255; data[idx++]=255; } } return data; }
 function genSadu(w,h){ const data=new Uint8Array(w*h*4); let i=0; for(let y=0;y<h;y++){ for(let x=0;x<w;x++){ const band = Math.floor(x/16)%4; let col=[200,0,0]; if(band===1) col=[0,0,0]; if(band===2) col=[230,230,230]; if(band===3) col=[160,0,0]; const a = (y%8<2 || x%16<2)? 255:255; data[i++]=col[0]; data[i++]=col[1]; data[i++]=col[2]; data[i++]=a; } } return data; }
 function toggleFS(){ if(!document.fullscreenElement) document.body.requestFullscreen(); else document.exitFullscreen(); }
