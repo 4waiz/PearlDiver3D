@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Heritage Pearl Quest 3D</title>
+  <title>Heritage Pearl Quest 3D — Deluxe</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -13,7 +13,9 @@
     <!-- TOP HUD -->
     <div id="hud" class="glass hidden">
       <div class="hud-item"><strong>Time</strong> <span id="time">05:00</span></div>
-      <div class="hud-item"><strong>O₂</strong> <span id="oxygen">100%</span></div>
+      <div class="hud-item o2wrap"><strong>O₂</strong>
+        <div id="o2bar"><span id="o2fill"></span></div>
+      </div>
       <div class="hud-item"><strong>Score</strong> <span id="score">0</span></div>
       <div class="hud-item"><strong>Bank</strong> x<span id="mult">1.0</span></div>
       <div class="hud-item"><strong>Carried</strong> <span id="carried">0</span></div>
@@ -36,6 +38,12 @@
       </div>
     </div>
 
+    <!-- CINEMATIC INTRO -->
+    <div id="cinema" class="panel glass hidden">
+      <h2>Welcome to <span style="color:var(--sand)">Pearl Quest 3D</span></h2>
+      <p>Hold your breath—your story begins on the shores of an island.<br/>Click to continue...</p>
+    </div>
+
     <!-- PAUSE -->
     <div id="pause" class="panel glass hidden">
       <h2>Paused</h2>
@@ -51,10 +59,10 @@
     <div id="how" class="panel glass hidden">
       <h2>How to Play</h2>
       <ul class="how">
-        <li><b>WASD</b> swim • <b>Space/Ctrl</b> ascend/descend • <b>Shift</b> boost</li>
-        <li><b>E</b> interact: collect pearls / artifacts / bank at the dhow</li>
+        <li><b>WASD</b> move • <b>Space/Ctrl</b> up/down • <b>Shift</b> boost</li>
+        <li><b>E</b> interact: collect pearls / artifacts / bank at the dhow / open chest</li>
         <li><b>P</b> pause • <b>M</b> mute • <b>F</b> fullscreen</li>
-        <li>Manage oxygen and avoid jellyfish stings.</li>
+        <li>Oxygen drains <em>underwater</em>, refills on the island/surface.</li>
       </ul>
       <button class="back">Back</button>
     </div>
@@ -111,8 +119,7 @@
     </div>
   </div>
 
-  <script type="module" src="main.js"></script>
-
+  <!-- Import map + module -->
   <script type="importmap">
   {
     "imports": {
@@ -121,7 +128,6 @@
     }
   }
   </script>
-
   <script type="module" src="main.js"></script>
 </body>
 </html>
