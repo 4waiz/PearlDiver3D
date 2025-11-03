@@ -1,4 +1,4 @@
-// Deluxe build
+// Bubbly UI + fixed intro click
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 
@@ -6,7 +6,7 @@ import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockCont
 const hud = q('#hud');
 const timeEl=q('#time'), scoreEl=q('#score'), multEl=q('#mult'), carriedEl=q('#carried');
 const oxyFill = q('#o2fill');
-const menu=q('#menu'), pause=q('#pause'), how=q('#how'), settings=q('#settings'), board=q('#board'), credits=q('#credits'), prompt=q('#prompt'), over=q('#over'), cinema=q('#cinema');
+const menu=q('#menu'), pause=q('#pause'), how=q('#how'), settings=q('#settings'), board=q('#board'), credits=q('#credits'), prompt=q('#prompt'), over=q('#over'), cinema=q('#cinema'), fade=q('#fade');
 const btn = (sel, fn)=> q(sel).addEventListener('click', fn);
 btn('#btnAdventure', startAdventure);
 btn('#btnStory', startStory);
@@ -23,6 +23,7 @@ btn('#saveBtn', saveScore);
 btn('#muteBtn', ()=> toggleMute());
 btn('#hqBtn', ()=> { state.hq = !state.hq; });
 q('#sens').addEventListener('input', e=> state.sens = parseFloat(e.target.value));
+q('#continueBtn').addEventListener('click', ()=> endIntro(true));
 
 function q(s){ return document.querySelector(s); }
 function $$(s){ return document.querySelectorAll(s); }
@@ -60,7 +61,7 @@ scene.background = new THREE.Color(SKY_BG);
 scene.fog = new THREE.FogExp2(0x84c2e3, 0.0025); // light fog above water
 
 const camera = new THREE.PerspectiveCamera(70, innerWidth/innerHeight, 0.1, 3000);
-camera.position.set(0,6,40); // start above water on island
+camera.position.set(0,6,60);
 const controls = new PointerLockControls(camera, document.body);
 scene.add(controls.getObject());
 
@@ -73,7 +74,7 @@ const skyGeo = new THREE.SphereGeometry(2000, 32, 32);
 const skyMat = new THREE.MeshBasicMaterial({ color: 0x74b6e3, side: THREE.BackSide });
 const sky = new THREE.Mesh(skyGeo, skyMat); scene.add(sky);
 
-// Water surface
+// Water surface with waves
 const waterGeo = new THREE.PlaneGeometry(2000, 2000, 200, 200);
 const waterMat = new THREE.MeshPhongMaterial({ color: 0x2dc2c7, transparent:true, opacity:0.35, side:THREE.DoubleSide });
 const water = new THREE.Mesh(waterGeo, waterMat); water.rotation.x = -Math.PI/2; water.position.y = 0; scene.add(water);
@@ -87,19 +88,13 @@ caustics.rotation.x = -Math.PI/2; caustics.position.y=-2; scene.add(caustics);
 const seabed = new THREE.Mesh(new THREE.PlaneGeometry(2000,2000,180,180), new THREE.MeshPhongMaterial({ color:0x7c7a5e, flatShading:true }));
 seabed.rotation.x = -Math.PI/2; displacePlane(seabed.geometry,(x,z)=> noise2(x*0.004,z*0.004)*14 - 34); scene.add(seabed);
 
-// Island
+// Island + palms
 const island = new THREE.Group(); scene.add(island);
 const islandGeo = new THREE.CircleGeometry(80, 64);
 const islandMat = new THREE.MeshPhongMaterial({ color:0xd6c29a });
 const islandMesh = new THREE.Mesh(islandGeo, islandMat);
 islandMesh.rotation.x = -Math.PI/2; islandMesh.position.y = 3.2; island.add(islandMesh);
-// palm trees
-for (let i=0;i<12;i++){
-  const palm = makePalm();
-  const r = 50 + Math.random()*20, a = Math.random()*Math.PI*2;
-  palm.position.set(Math.cos(a)*r, 3.2, Math.sin(a)*r);
-  island.add(palm);
-}
+for (let i=0;i<14;i++){ const palm = makePalm(); const r = 50 + Math.random()*20, a = Math.random()*Math.PI*2; palm.position.set(Math.cos(a)*r, 3.2, Math.sin(a)*r); island.add(palm); }
 
 // Dhow near shore
 const dhow = new THREE.Group();
@@ -111,17 +106,15 @@ dhow.position.set(0,1,-120); scene.add(dhow);
 const bankRing = new THREE.Mesh(new THREE.TorusGeometry(18, 0.6, 16, 48), new THREE.MeshBasicMaterial({ color:0xffe28a }));
 bankRing.rotation.x = Math.PI/2; bankRing.position.set(0,-6,-120); scene.add(bankRing);
 
-// Kelp & Coral (underwater)
+// Underwater flora & fauna
 const kelp = new THREE.Group(); scene.add(kelp);
 for(let i=0;i<160;i++){ const k=makeKelp(); k.position.set(rand(-900,900),-32,rand(-900,900)); kelp.add(k); }
 const coralGroup = new THREE.Group(); scene.add(coralGroup);
-for(let i=0;i<80;i++){ const col=(i%2===0)?0xe76f51:0xf4a261; const geo=new THREE.ConeGeometry(rand(0.6,1.2),rand(1.2,2.4),6); const mat=new THREE.MeshPhongMaterial({ color:col, emissive:0x240a05, shininess:16 }); const c=new THREE.Mesh(geo,mat); c.position.set(rand(-900,900), -33, rand(-900,900)); coralGroup.add(c); }
-
-// Fish schools
+for(let i=0;i<80;i++){ const col=(i%2===0)?0xff8a75:0xf4a261; const geo=new THREE.ConeGeometry(rand(0.6,1.2),rand(1.2,2.4),6); const mat=new THREE.MeshPhongMaterial({ color:col, emissive:0x240a05, shininess:16 }); const c=new THREE.Mesh(geo,mat); c.position.set(rand(-900,900), -33, rand(-900,900)); coralGroup.add(c); }
 const fishGroup = new THREE.Group(); scene.add(fishGroup);
 for(let i=0;i<120;i++){ fishGroup.add(makeFish()); }
 
-// oysters / pearls / jellies / artifacts
+// pearls / jellies / artifacts / bubbles
 let oysters=[], pearls=[], jellies=[], artifacts=[], bubbles=[];
 
 // -------------------- Game State --------------------
@@ -129,23 +122,14 @@ const state = {
   running:false, paused:false, mode:null,
   chapterIndex:0, chapter:null, startTime:0, timeLimit:300,
   score:0, carried:0, mult:1, oxy:100, hq:true, sens:1, amb:null,
-  inIntro:false, tIntro:0
+  inIntro:false, tIntro:0, afterIntro:null
 };
 
-// Story chapters (same goals)
+// Chapters
 const CHAPTERS = [
-  { name:"Chapter 1 — Shallow Waters",
-    intro:"Reach the dhow, collect <b>5 pearls</b>, and bank them to honor your first harvest.",
-    goals:{ pearls:5, bank:true }, time:210, facts:"Pearling once formed the backbone of the UAE's coastal economy.",
-    setup: ()=>{} },
-  { name:"Chapter 2 — The Falcon's Compass",
-    intro:"Find the <b>Falcon Compass</b> on the seabed. Its guidance echoes navigators' wisdom.",
-    goals:{ artifact:'compass' }, time:240, facts:"Traditional navigators relied on sea currents, winds, and the stars.",
-    setup: ()=>{ addArtifact('compass'); } },
-  { name:"Chapter 3 — Moonlight Harvest",
-    intro:"Night waters are calm. Gather <b>10 pearls</b> and bank them before time fades.",
-    goals:{ pearls:10, bank:true }, time:210, facts:"Merchants traded natural pearls across the Gulf and beyond.",
-    setup: ()=>{} },
+  { name:"Chapter 1 — Shallow Waters", intro:"Reach the dhow, collect <b>5 pearls</b>, bank them.", goals:{ pearls:5, bank:true }, time:210, setup: ()=>{} },
+  { name:"Chapter 2 — The Falcon's Compass", intro:"Find the <b>Falcon Compass</b> on the seabed.", goals:{ artifact:'compass' }, time:240, setup: ()=>{ addArtifact('compass'); } },
+  { name:"Chapter 3 — Moonlight Harvest", intro:"Gather <b>10 pearls</b> and bank them.", goals:{ pearls:10, bank:true }, time:210, setup: ()=>{} },
 ];
 
 // -------------------- Mode starters --------------------
@@ -158,32 +142,43 @@ function beginStoryChapter(i, fresh=false){
   ch.setup(i);
   playIntroThen(()=>{
     spawnOysters(i===2?30:20); spawnJellies(i===2?14:10);
-    prompt.innerHTML = `<h3>${ch.name}</h3><p>${ch.intro}</p>`; prompt.classList.remove('hidden'); setTimeout(()=>prompt.classList.add('hidden'), 3000);
+    prompt.innerHTML = `<h3>${ch.name}</h3><p>${ch.intro}</p>`; prompt.classList.remove('hidden'); setTimeout(()=>prompt.classList.add('hidden'), 2600);
   });
 }
 
 function playIntroThen(after){
-  // player on island looking at water
-  controls.getObject().position.set(20, 6, 40);
-  controls.getObject().rotation.set(0,0,0);
+  // position & face the dhow
+  controls.getObject().position.set(0, 6, 60);
+  camera.lookAt(0, 6, -120);
   hidePanels();
   cinema.classList.remove('hidden');
-  state.inIntro = true; state.tIntro = 0;
+  state.inIntro = true; state.tIntro = 0; state.afterIntro = after;
   ambientStart();
-  const onClick = ()=>{ document.removeEventListener('mousedown', onClick); controls.lock(); cinema.classList.add('hidden'); };
-  document.addEventListener('mousedown', onClick);
-  state.startTime = performance.now(); state.running=true; // timer will advance in slow-mo
-  state.afterIntro = after;
+  // also allow space/enter to skip
+  const keySkip = (e)=>{ if(e.code==='Space' || e.code==='Enter'){ endIntro(true); } };
+  window.addEventListener('keydown', keySkip, { once:true });
+}
+
+function endIntro(immediate){
+  cinema.classList.add('hidden');
+  fade.classList.add('show');
+  setTimeout(()=>{
+    fade.classList.remove('show');
+    state.inIntro=false;
+    state.startTime = performance.now();
+    state.running = true;
+    // spawn after we fade in
+    if (typeof state.afterIntro === 'function') state.afterIntro();
+    controls.lock(); // lock immediately
+  }, immediate? 250 : 1200);
 }
 
 // -------------------- Entities --------------------
 function resetWorld(){
   [...oysters,...pearls,...jellies,...artifacts,...bubbles].forEach(m=> scene.remove(m));
   oysters=[]; pearls=[]; jellies=[]; artifacts=[]; bubbles=[];
-  // reset environment
   scene.background.set(SKY_BG); scene.fog.color.set(0x84c2e3); scene.fog.density = 0.0025;
-  controls.getObject().position.set(20,6,40);
-  // remove lingering prompt/cinema
+  controls.getObject().position.set(0,6,60);
   [prompt, cinema].forEach(x=> x.classList.add('hidden'));
 }
 function spawnOysters(n){
@@ -206,7 +201,6 @@ function addArtifact(kind){
     const g=new THREE.TorusKnotGeometry(1.2,0.35,80,12); const m=new THREE.MeshPhongMaterial({ color:0xffdd88, emissive:0x553300, shininess:80 });
     const mesh=new THREE.Mesh(g,m); mesh.position.set(rand(-700,700),-24,rand(-700,700)); mesh.userData.kind='compass'; scene.add(mesh); artifacts.push(mesh);
   }
-  // Treasure chest
   const chest = new THREE.Mesh(new THREE.BoxGeometry(3,2,2), new THREE.MeshPhongMaterial({ color:0x8b5a2b }));
   chest.position.set(rand(-700,700), -28, rand(-700,700)); chest.userData.kind='chest'; scene.add(chest); artifacts.push(chest);
 }
@@ -227,7 +221,7 @@ function updateHUD(){
   if(rem<=0) return endChapterOrGame();
 }
 function fmtTime(t){ const m=String(Math.floor(t/60)).padStart(2,'0'); const s=String(t%60).padStart(2,'0'); return `${m}:${s}`; }
-function setOxyBar(v){ v=Math.max(0,Math.min(100,v)); oxyFill.style.width = `${v}%`; oxyFill.style.background = v>50? 'linear-gradient(90deg,#2bc4ad,#69d0b7)': (v>25? 'linear-gradient(90deg,#ffd166,#f3a712)' : 'linear-gradient(90deg,#ef476f,#e63946)'); }
+function setOxyBar(v){ v=Math.max(0,Math.min(100,v)); oxyFill.style.width = `${v}%`; oxyFill.style.background = v>50? 'linear-gradient(90deg,#60eac2,#1aa5a1)': (v>25? 'linear-gradient(90deg,#ffd166,#f3a712)' : 'linear-gradient(90deg,#ef476f,#e63946)'); }
 
 function interact(){
   if(!state.running || state.paused) return;
@@ -300,17 +294,6 @@ function animate(){
   requestAnimationFrame(animate);
   let now=performance.now(); let dt=(animate._last? (now-animate._last):16)/1000; animate._last=now;
 
-  // Cinematic intro (slow motion + auto glide into water)
-  if(state.inIntro){
-    dt *= 0.2; // slow-mo
-    state.tIntro += dt;
-    // gentle move toward shore & dip
-    const pos = controls.getObject().position;
-    pos.z += (-120 - pos.z) * 0.05 * dt * 60;
-    pos.y += (2 - pos.y) * 0.03 * dt * 60;
-    if(state.tIntro > 3.0){ state.inIntro=false; cinema.classList.add('hidden'); controls.lock(); state.afterIntro && state.afterIntro(); }
-  }
-
   if(state.running && !state.paused){
     // waves
     const posAttr = water.geometry.attributes.position;
@@ -325,12 +308,10 @@ function animate(){
     bankIfClose();
     updateHUD();
 
-    // open oysters near player and spin pearls
     const p=controls.getObject().position;
     for(const o of oysters){ const d=o.position.distanceTo(p); o.userData.open += ((d<6?1:0)-o.userData.open)*0.1; o.children[0].rotation.z = -o.userData.open*1.1; }
     for(const pr of pearls){ pr.rotation.y += dt*1.5; }
 
-    // jellies
     for(const j of jellies){
       j.userData.phase += dt*0.7;
       j.position.y = -22 + Math.sin(j.userData.phase)*4;
@@ -339,7 +320,6 @@ function animate(){
       if(j.position.distanceTo(p)<2.8){ state.oxy=Math.max(0,state.oxy-18*dt*1.5); stingSfx(); }
     }
 
-    // fish swim
     fishGroup.children.forEach(f=>{
       f.userData.a += dt * f.userData.speed;
       f.position.x += Math.cos(f.userData.a) * f.userData.speed * 10;
@@ -349,7 +329,6 @@ function animate(){
       f.rotation.y = Math.atan2(f.userData.vx||1, f.userData.vz||1);
     });
 
-    // textures motion
     caustics.material.map.offset.x += dt*0.02; caustics.material.map.offset.y += dt*0.04;
   }
   renderer.setPixelRatio( (state.hq? Math.min(devicePixelRatio, 2) : 1) );
@@ -362,7 +341,6 @@ function maybeBubble(pos){
     const b = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), new THREE.MeshBasicMaterial({ color:0xcfeffc, transparent:true, opacity:0.6 }));
     b.position.copy(pos); bubbles.push(b); scene.add(b);
   }
-  // rise & fade
   bubbles.forEach((b, i)=>{
     b.position.y += 0.15;
     b.material.opacity -= 0.008;
@@ -381,12 +359,7 @@ function rand(a,b){ return a + Math.random()*(b-a); }
 function noise2(x,y){ return (Math.sin(x*2.1+Math.sin(y*1.3))*0.5 + Math.sin(y*2.7+Math.sin(x*0.7))*0.5); }
 function displacePlane(geom, fn){ geom.computeBoundingBox(); const pos=geom.attributes.position; for(let i=0;i<pos.count;i++){ const x=pos.getX(i), z=pos.getZ(i); pos.setY(i, fn(x,z)); } pos.needsUpdate=true; geom.computeVertexNormals(); }
 function makeKelp(){ const g=new THREE.CapsuleGeometry(0.3,6,3,6); const m=new THREE.MeshLambertMaterial({ color:0x1e6f5c }); const b=new THREE.Mesh(g,m); b.scale.set(1, rand(1,2.5), 1); b.rotation.z = rand(-0.5,0.5); return b; }
-function makePalm(){
-  const grp=new THREE.Group();
-  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.6,10,8), new THREE.MeshPhongMaterial({ color:0x7a5533 })); trunk.position.y=8; grp.add(trunk);
-  for(let i=0;i<6;i++){ const leaf=new THREE.Mesh(new THREE.PlaneGeometry(6,2), new THREE.MeshLambertMaterial({ color:0x1e6f5c, side:THREE.DoubleSide })); leaf.position.set(0,13,0); leaf.rotation.set(0, i*Math.PI/3, -Math.PI/6); grp.add(leaf); }
-  return grp;
-}
+function makePalm(){ const grp=new THREE.Group(); const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.6,10,8), new THREE.MeshPhongMaterial({ color:0x7a5533 })); trunk.position.y=8; grp.add(trunk); for(let i=0;i<6;i++){ const leaf=new THREE.Mesh(new THREE.PlaneGeometry(6,2), new THREE.MeshLambertMaterial({ color:0x1e6f5c, side:THREE.DoubleSide })); leaf.position.set(0,13,0); leaf.rotation.set(0, i*Math.PI/3, -Math.PI/6); grp.add(leaf);} return grp; }
 function makeJelly(){ const g=new THREE.Group(); const bell=new THREE.Mesh(new THREE.SphereGeometry(1.4,16,16), new THREE.MeshPhongMaterial({ color:0xbf80ff, emissive:0x442266, shininess:60 })); g.add(bell); const mat=new THREE.LineBasicMaterial({ color:0xd2a0ff }); for(let i=0;i<6;i++){ const geo=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(rand(-0.6,0.6), -2.4-rand(0,1), rand(-0.6,0.6))]); g.add(new THREE.Line(geo,mat)); } return g; }
 function makeFish(){ const g=new THREE.ConeGeometry(0.6, 1.8, 8); const m=new THREE.MeshLambertMaterial({ color: (Math.random()<0.5? 0xf4a261:0x2bc4ad) }); const f=new THREE.Mesh(g,m); f.rotation.x = Math.PI/2; f.position.set(rand(-900,900), -18, rand(-900,900)); f.userData.speed = rand(0.5,1.4); f.userData.a=Math.random()*6.28; return f; }
 function genCaustics(w,h){ const data=new Uint8Array(w*h*4); let idx=0; for(let y=0;y<h;y++){ for(let x=0;x<w;x++){ const n=(Math.sin(x*0.2)+Math.sin(y*0.27)+Math.sin((x+y)*0.13))*0.33; const v=Math.max(0,Math.min(255,180+n*70)); data[idx++]=v; data[idx++]=v; data[idx++]=255; data[idx++]=255; } } return data; }

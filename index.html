@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Heritage Pearl Quest 3D — Deluxe</title>
+  <title>Heritage Pearl Quest 3D — Bubbly</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -11,7 +11,7 @@
 
   <div id="ui">
     <!-- TOP HUD -->
-    <div id="hud" class="glass hidden">
+    <div id="hud" class="bubblebar hidden">
       <div class="hud-item"><strong>Time</strong> <span id="time">05:00</span></div>
       <div class="hud-item o2wrap"><strong>O₂</strong>
         <div id="o2bar"><span id="o2fill"></span></div>
@@ -24,39 +24,45 @@
     <div id="crosshair">+</div>
 
     <!-- MAIN MENU -->
-    <div id="menu" class="panel glass">
+    <div id="menu" class="panel card">
       <h1>Heritage Pearl Quest 3D</h1>
-      <h2>Innovate Your Heritage Game</h2>
-      <p class="tag">Reviving Emirati pearling culture through play.</p>
+      <p class="tag">Innovate Your Heritage Game</p>
       <div class="buttons">
-        <button id="btnStory">Start Story</button>
-        <button id="btnAdventure">Free Dive (Score)</button>
-        <button id="btnHow">How to Play</button>
-        <button id="btnLeaderboard">Leaderboard</button>
-        <button id="btnSettings">Settings</button>
-        <button id="btnCredits">Credits</button>
+        <button id="btnStory" class="pill">Story</button>
+        <button id="btnAdventure" class="pill">Free Dive</button>
+        <button id="btnHow" class="ghost">How to Play</button>
+        <button id="btnLeaderboard" class="ghost">Leaderboard</button>
+        <button id="btnSettings" class="ghost">Settings</button>
+        <button id="btnCredits" class="ghost">Credits</button>
+      </div>
+      <div class="bubbles">
+        <span></span><span></span><span></span><span></span><span></span>
       </div>
     </div>
 
     <!-- CINEMATIC INTRO -->
-    <div id="cinema" class="panel glass hidden">
-      <h2>Welcome to <span style="color:var(--sand)">Pearl Quest 3D</span></h2>
-      <p>Hold your breath—your story begins on the shores of an island.<br/>Click to continue...</p>
+    <div id="cinema" class="panel card hidden">
+      <h2>Welcome to <span>Pearl Quest 3D</span></h2>
+      <p>Begin at the island—dive when you're ready.</p>
+      <button id="continueBtn" class="pill big">Click to Dive</button>
     </div>
 
+    <!-- Fade overlay -->
+    <div id="fade" class="hidden"></div>
+
     <!-- PAUSE -->
-    <div id="pause" class="panel glass hidden">
+    <div id="pause" class="panel card hidden">
       <h2>Paused</h2>
       <div class="buttons">
-        <button id="resumeBtn">Resume</button>
-        <button id="restartBtn">Restart</button>
-        <button id="menuBtn">Main Menu</button>
+        <button id="resumeBtn" class="pill">Resume</button>
+        <button id="restartBtn" class="ghost">Restart</button>
+        <button id="menuBtn" class="ghost">Main Menu</button>
       </div>
       <p class="hint">Press <b>P</b> to toggle pause.</p>
     </div>
 
     <!-- HOW TO -->
-    <div id="how" class="panel glass hidden">
+    <div id="how" class="panel card hidden">
       <h2>How to Play</h2>
       <ul class="how">
         <li><b>WASD</b> move • <b>Space/Ctrl</b> up/down • <b>Shift</b> boost</li>
@@ -64,11 +70,11 @@
         <li><b>P</b> pause • <b>M</b> mute • <b>F</b> fullscreen</li>
         <li>Oxygen drains <em>underwater</em>, refills on the island/surface.</li>
       </ul>
-      <button class="back">Back</button>
+      <button class="back pill">Back</button>
     </div>
 
     <!-- SETTINGS -->
-    <div id="settings" class="panel glass hidden">
+    <div id="settings" class="panel card hidden">
       <h2>Settings</h2>
       <div class="row">
         <label>Mouse sensitivity</label>
@@ -76,45 +82,44 @@
       </div>
       <div class="row">
         <label>Music</label>
-        <button id="muteBtn">Mute/Unmute (M)</button>
+        <button id="muteBtn" class="ghost">Mute/Unmute (M)</button>
       </div>
       <div class="row">
         <label>Graphics</label>
-        <button id="hqBtn">Toggle High Quality</button>
+        <button id="hqBtn" class="ghost">Toggle High Quality</button>
       </div>
-      <button class="back">Back</button>
+      <button class="back pill">Back</button>
     </div>
 
     <!-- LEADERBOARD -->
-    <div id="board" class="panel glass hidden">
+    <div id="board" class="panel card hidden">
       <h2>Top Divers</h2>
       <ol id="leaders"></ol>
-      <button class="back">Back</button>
+      <button class="back pill">Back</button>
     </div>
 
     <!-- CREDITS -->
-    <div id="credits" class="panel glass hidden">
+    <div id="credits" class="panel card hidden">
       <h2>Credits</h2>
       <p><b>Design & Development:</b> Awaiz Ahmed — Software Engineering Student</p>
-      <p>Built for the competition: <b>“Innovate Your Heritage Game”</b></p>
-      <p>Goal: Revive Emirati heritage in an innovative, student‑led experience.</p>
-      <button class="back">Back</button>
+      <p>Built for <b>“Innovate Your Heritage Game”</b></p>
+      <button class="back pill">Back</button>
     </div>
 
     <!-- STORY PROMPTS -->
-    <div id="prompt" class="panel glass hidden small"></div>
+    <div id="prompt" class="panel card hidden small"></div>
 
     <!-- GAME OVER -->
-    <div id="over" class="panel glass hidden">
+    <div id="over" class="panel card hidden">
       <h2>Mission Complete</h2>
       <p id="overMsg">Your score: <span id="finalScore">0</span></p>
       <div class="save">
         <input id="playerName" placeholder="Enter your name (e.g., Awaiz Ahmed)"/>
-        <button id="saveBtn">Save to Leaderboard</button>
+        <button id="saveBtn" class="pill">Save to Leaderboard</button>
       </div>
       <div class="buttons">
-        <button id="again">Play Again</button>
-        <button class="back">Main Menu</button>
+        <button id="again" class="pill">Play Again</button>
+        <button class="back pill">Main Menu</button>
       </div>
     </div>
   </div>

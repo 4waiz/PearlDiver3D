@@ -1,37 +1,58 @@
 :root{
-  --teal:#156a75;
   --deep:#052129;
-  --sand:#e6c88f;
-  --wood:#7a5533;
-  --coral:#e76f51;
-  --date:#1e6f5c;
   --pearl:#f6f5f3;
+  --sand:#e6c88f;
+  --teal:#1aa5a1;
+  --mint:#60eac2;
+  --coral:#ff8a75;
+  --indigo:#5863f8;
 }
 html,body{height:100%;margin:0;background:var(--deep);color:var(--pearl);font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Arial;overflow:hidden}
 #bg{position:fixed;inset:0;display:block;z-index:0}
 #ui{position:fixed;inset:0;pointer-events:none;z-index:10}
-.glass{backdrop-filter:blur(10px);background:rgba(230,200,143,.10);border:1px solid rgba(230,200,143,.35);border-radius:16px;box-shadow:0 12px 50px rgba(0,0,0,.45)}
-.panel{pointer-events:all;width:min(760px,92vw);padding:24px;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center}
-.panel h1{margin:0 0 6px;font-size:48px;letter-spacing:.5px;color:var(--sand)}
-.panel h2{margin:6px 0 12px;font-weight:800;color:var(--pearl)}
-.tag{color:#dbeef4}
-.buttons{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:10px}
-button{padding:10px 16px;border-radius:12px;border:1px solid rgba(230,200,143,.45);background:linear-gradient(180deg, #0f2a31, #123842);color:#f3f8ff;font-weight:700;cursor:pointer}
-button:hover{background:linear-gradient(180deg,#17404a,#1e5663)}
+
+/* Bubbly panels */
+.panel.card{pointer-events:all;width:min(760px,92vw);padding:28px 24px;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;
+  border-radius:28px;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));
+  border:1px solid rgba(255,255,255,.28);box-shadow:0 12px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.15)}
+.panel h1{margin:0 0 6px;font-size:52px;letter-spacing:.5px;color:var(--sand);text-shadow:0 2px 0 rgba(0,0,0,.25)}
+.panel h2{margin:6px 0 12px;font-weight:900}
+.tag{opacity:.9;margin-bottom:8px}
+.buttons{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+.pill{padding:12px 18px;border-radius:999px;border:0;background:linear-gradient(135deg,var(--mint),var(--teal));color:#052129;font-weight:900;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.pill.big{padding:14px 26px;font-size:18px}
+.pill:hover{filter:brightness(1.06)}
+.ghost{padding:10px 16px;border-radius:999px;border:1px dashed rgba(255,255,255,.45);background:rgba(255,255,255,.06);color:#fff;cursor:pointer}
+.ghost:hover{background:rgba(255,255,255,.1)}
 .hidden{display:none}
 .hint{opacity:.85}
 .back{margin-top:10px}
-.how{list-style:disc;text-align:left;max-width:640px;margin:0 auto;color:#f2e6cc}
-#hud{position:absolute;left:16px;right:16px;top:16px;padding:10px 14px;display:flex;gap:16px;justify-content:space-between;align-items:center;pointer-events:none;background:rgba(18,56,66,.25);border:1px solid rgba(230,200,143,.28);border-radius:14px}
-.hud-item{min-width:110px;text-align:center}
-#crosshair{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:22px;opacity:.28;pointer-events:none;color:var(--sand)}
-#prompt.small{padding:14px;width:min(520px,90vw)}
-#board ol{max-height:45vh;overflow:auto;text-align:left}
-#over input{width:60%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.2);color:#fff}
+.how{list-style:disc;text-align:left;max-width:640px;margin:0 auto 8px;color:#f2e6cc}
+
+/* Bubbly HUD */
+.bubblebar{position:absolute;left:16px;right:16px;top:16px;padding:12px 16px;display:flex;gap:16px;justify-content:space-between;align-items:center;pointer-events:none;
+  background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.18);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.hud-item{min-width:130px;text-align:center}
+#crosshair{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:20px;opacity:.3;pointer-events:none}
 
 /* Oxygen Bar */
-#o2bar{position:relative;width:200px;height:14px;border-radius:999px;background:rgba(255,255,255,.12);margin-top:6px;border:1px solid rgba(230,200,143,.35);overflow:hidden}
-#o2fill{position:absolute;left:0;top:0;bottom:0;width:100%;display:block;background:linear-gradient(90deg,#2bc4ad,#69d0b7);border-radius:999px;box-shadow:0 0 12px rgba(41,221,180,.55) inset}
-.o2wrap strong{display:block}
-/* Cinema overlay */
-#cinema{pointer-events:all}
+#o2bar{position:relative;width:240px;height:16px;border-radius:999px;background:rgba(255,255,255,.12);margin-top:6px;border:1px solid rgba(255,255,255,.25);overflow:hidden}
+#o2fill{position:absolute;left:0;top:0;bottom:0;width:100%;display:block;background:linear-gradient(90deg,var(--mint),var(--teal));border-radius:999px;box-shadow:0 0 12px rgba(41,221,180,.55) inset}
+
+/* Floating bubbles decor on menu */
+.bubbles{position:absolute;inset:auto 0 -10px 0;height:60px;pointer-events:none;filter:blur(1px)}
+.bubbles span{position:absolute;bottom:-12px;width:10px;height:10px;background:radial-gradient(circle at 30% 30%, #fff, rgba(255,255,255,.4));border-radius:50%;animation:rise 5s linear infinite;opacity:.7}
+.bubbles span:nth-child(1){left:20%}
+.bubbles span:nth-child(2){left:40%;animation-delay:.6s}
+.bubbles span:nth-child(3){left:60%;animation-delay:1.2s}
+.bubbles span:nth-child(4){left:72%;animation-delay:1.6s}
+.bubbles span:nth-child(5){left:85%;animation-delay:2s}
+@keyframes rise{0%{transform:translateY(0) scale(.6)}100%{transform:translateY(-90px) scale(1)}}
+
+/* Fade overlay */
+#fade{position:fixed;inset:0;background:#000;opacity:0;transition:opacity .6s ease;pointer-events:none;z-index:9}
+#fade.show{opacity:1}
+
+/* Board, save field */
+#board ol{max-height:45vh;overflow:auto;text-align:left}
+#over input{width:60%;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.2);color:#fff}
