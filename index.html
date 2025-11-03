@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pearl Diver 3D — UAE Heritage</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="ui">
+    <div id="topbar" class="glass">
+      <div><strong>Time:</strong> <span id="time">05:00</span></div>
+      <div><strong>O₂:</strong> <span id="oxygen">100%</span></div>
+      <div><strong>Score:</strong> <span id="score">0</span></div>
+      <div><strong>Bank x</strong><span id="mult">1.0</span></div>
+    </div>
+
+    <div id="crosshair">+</div>
+
+    <div id="startScreen" class="panel glass">
+      <h1>PEARL DIVER 3D</h1>
+      <h2>UAE Heritage — Dive for Pearls</h2>
+      <p>Move with <b>WASD</b>, ascend <b>Space</b>, descend <b>Ctrl</b>, boost <b>Shift</b>.<br/>
+      Collect with <b>E</b>. Avoid jellyfish. Return to the dhow to bank pearls & refill oxygen.</p>
+      <button id="startBtn">Enter the Dive</button>
+      <div class="small">Tip: click to lock the mouse (FPS controls). Press <b>P</b> to pause.</div>
+    </div>
+
+    <div id="pauseScreen" class="panel glass hidden">
+      <h2>Paused</h2>
+      <p>Press <b>P</b> to resume.</p>
+    </div>
+
+    <div id="gameOver" class="panel glass hidden">
+      <h2>Time!</h2>
+      <p>Your score: <span id="finalScore">0</span></p>
+      <input id="playerName" placeholder="Enter your name (e.g., Awaiz Ahmed)"/>
+      <button id="saveBtn">Save to Leaderboard</button>
+      <button id="restartBtn">Play Again</button>
+      <h3>Top Divers</h3>
+      <ol id="leaders"></ol>
+    </div>
+  </div>
+
+  <canvas id="bg"></canvas>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
