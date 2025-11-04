@@ -2,14 +2,30 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pearl Quest 3D — Navigation Edition</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Pearl Quest 3D — Mobile + Desktop</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- 3D -->
   <canvas id="bg"></canvas>
+
+  <!-- UI root -->
   <div id="ui"></div>
 
+  <!-- Touch UI (shown only on phones/tablets via body.mobile) -->
+  <div id="touchUI" class="hidden">
+    <div id="joyL" class="joy"><span class="knob"></span></div>
+    <div id="joyR" class="joy"><span class="knob"></span></div>
+    <div class="tbuttons">
+      <button id="tUp"    aria-label="Swim Up">↑</button>
+      <button id="tDown"  aria-label="Swim Down">↓</button>
+      <button id="tUse"   aria-label="Interact">E</button>
+      <button id="tPause" aria-label="Pause">⏸</button>
+    </div>
+  </div>
+
+  <!-- three.js import map -->
   <script type="importmap">
   {
     "imports": {
