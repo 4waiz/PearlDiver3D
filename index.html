@@ -3,110 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pearl Quest 3D — Story Water Pro</title>
+  <title>Pearl Quest 3D — Ocean Life Edition</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <canvas id="bg"></canvas>
-  <div id="ui">
-    <div id="hud" class="bubblebar hidden">
-      <div class="hud-item"><strong id="lblTime">Time</strong> <span id="time">05:00</span></div>
-      <div class="hud-item o2wrap"><strong id="lblO2">O₂</strong>
-        <div id="o2bar"><span id="o2fill"></span></div>
-      </div>
-      <div class="hud-item"><strong id="lblScore">Score</strong> <span id="score">0</span></div>
-      <div class="hud-item"><strong id="lblBank">Bank</strong> x<span id="mult">1.0</span></div>
-      <div class="hud-item"><strong id="lblCarry">Carried</strong> <span id="carried">0</span></div>
-    </div>
-    <div id="quest" class="chip hidden">Quest goes here…</div>
-    <div id="crosshair">+</div>
-
-    <div id="menu" class="panel card">
-      <h1>Pearl Quest 3D</h1>
-      <p class="tag" id="tagLine">Innovate Your Heritage Game</p>
-      <div class="buttons">
-        <button id="btnStory" class="pill">Story</button>
-        <button id="btnAdventure" class="pill">Free Dive</button>
-        <button id="btnHow" class="ghost">How to Play</button>
-        <button id="btnSettings" class="ghost">Settings</button>
-        <button id="btnLeaderboard" class="ghost">Leaderboard</button>
-        <button id="btnCredits" class="ghost">Credits</button>
-      </div>
-    </div>
-
-    <div id="cinema" class="panel card hidden">
-      <h2 id="welcomeTitle">Welcome to <span>Pearl Quest 3D</span></h2>
-      <p id="welcomeSub">Begin at the island—dive when you're ready.</p>
-      <button id="continueBtn" class="pill big">Click to Dive</button>
-    </div>
-
-    <div id="pause" class="panel card hidden">
-      <h2 id="pausedTitle">Paused</h2>
-      <div class="buttons">
-        <button id="resumeBtn" class="pill">Resume</button>
-        <button id="restartBtn" class="ghost">Restart</button>
-        <button id="menuBtn" class="ghost">Main Menu</button>
-      </div>
-      <p class="hint" id="pausedHint">Press <b>P</b> to toggle pause.</p>
-    </div>
-
-    <div id="how" class="panel card hidden">
-      <h2 id="howTitle">How to Play</h2>
-      <ul class="how" id="howList">
-        <li><b>WASD</b> move • <b>Space/Ctrl</b> up/down • <b>Shift</b> boost</li>
-        <li><b>E</b> interact: collect pearls/artifacts & bank at the dhow</li>
-        <li><b>P</b> pause • <b>M</b> mute • <b>F</b> fullscreen</li>
-      </ul>
-      <button class="back pill">Back</button>
-    </div>
-
-    <div id="settings" class="panel card hidden">
-      <h2 id="settingsTitle">Settings</h2>
-      <div class="row">
-        <label id="sensLbl">Mouse sensitivity</label>
-        <input id="sens" type="range" min="0.2" max="1.6" step="0.05" value="1"/>
-      </div>
-      <div class="row">
-        <label>Music</label>
-        <button id="muteBtn" class="ghost">Mute/Unmute (M)</button>
-      </div>
-      <div class="row">
-        <label>Graphics</label>
-        <button id="hqBtn" class="ghost">Toggle High Quality</button>
-      </div>
-      <button class="back pill">Back</button>
-    </div>
-
-    <div id="board" class="panel card hidden">
-      <h2 id="leaderTitle">Top Divers</h2>
-      <ol id="leaders"></ol>
-      <button class="back pill">Back</button>
-    </div>
-
-    <div id="credits" class="panel card hidden">
-      <h2 id="creditsTitle">Credits</h2>
-      <p><b>Design & Development:</b> Awaiz Ahmed — Software Engineering Student</p>
-      <p>Built for <b>“Innovate Your Heritage Game”</b></p>
-      <button class="back pill">Back</button>
-    </div>
-
-    <div id="prompt" class="panel card hidden small"></div>
-
-    <div id="over" class="panel card hidden">
-      <h2 id="overTitle">Mission Complete</h2>
-      <p id="overMsg">Your score: <span id="finalScore">0</span></p>
-      <div class="save">
-        <input id="playerName" placeholder="Enter your name (e.g., Awaiz Ahmed)"/>
-        <button id="saveBtn" class="pill">Save to Leaderboard</button>
-      </div>
-      <div class="buttons">
-        <button id="again" class="pill">Play Again</button>
-        <button class="back pill">Main Menu</button>
-      </div>
-    </div>
-
-    <div id="fade" class="hidden"></div>
-  </div>
+  <div id="ui"></div>
 
   <script type="importmap">
   {

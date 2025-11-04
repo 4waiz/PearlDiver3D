@@ -2,9 +2,11 @@
 html,body{height:100%;margin:0;background:var(--deep);color:var(--pearl);font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Arial;overflow:hidden}
 #bg{position:fixed;inset:0;display:block;z-index:0}
 #ui{position:fixed;inset:0;pointer-events:none;z-index:10}
-.panel.card{pointer-events:all;width:min(820px,92vw);padding:28px 24px;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;border-radius:28px;background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.28);box-shadow:0 18px 60px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.15)}
+.panel.card{pointer-events:all;width:min(860px,92vw);padding:28px 24px;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;border-radius:28px;background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.28);box-shadow:0 18px 60px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.15)}
 .panel h1{margin:0 0 6px;font-size:56px;color:var(--sand)}
+.panel h2{margin:0 0 10px;font-size:32px;color:#fff}
 .pill{padding:12px 18px;border-radius:999px;border:0;background:linear-gradient(135deg,var(--mint),var(--teal));color:#052129;font-weight:900;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.pill.big{padding:16px 26px;font-size:18px}
 .ghost{padding:10px 16px;border-radius:999px;border:1px dashed rgba(255,255,255,.45);background:rgba(255,255,255,.06);color:#fff;cursor:pointer}
 .hidden{display:none}
 .bubblebar{position:absolute;left:16px;right:16px;top:16px;padding:12px 16px;display:flex;gap:16px;justify-content:space-between;align-items:center;pointer-events:none;background:rgba(73,153,190,.45);border:1px solid rgba(255,255,255,.18);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
