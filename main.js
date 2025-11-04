@@ -473,19 +473,22 @@ function drawRadar() {
     .crossVectors(fwd, new THREE.Vector3(0,1,0))   // right-hand vector
     .normalize();
 
-  // player arrow (centered). "Up" = forward
-  const yaw = Math.atan2(fwd.x, fwd.z);
-  ctx.save();
-  ctx.translate(cx, cy);
-  ctx.rotate(-yaw);
-  ctx.fillStyle = '#60eac2';
-  ctx.beginPath();
-  ctx.moveTo(0, -10);   // tip
-  ctx.lineTo(-7, 7);
-  ctx.lineTo(7, 7);
-  ctx.closePath();
-  ctx.fill();
-  ctx.restore();
+// player arrow (centered). Rotate 180°
+const yaw = Math.atan2(fwd.x, fwd.z);
+
+ctx.save();
+ctx.translate(cx, cy);
+// add Math.PI to flip the triangle
+ctx.rotate(-yaw + Math.PI);   // <- was: ctx.rotate(-yaw)
+ctx.fillStyle = '#60eac2';
+ctx.beginPath();
+ctx.moveTo(0, -10);
+ctx.lineTo(-7, 7);
+ctx.lineTo(7, 7);
+ctx.closePath();
+ctx.fill();
+ctx.restore();
+
 
   // project world -> radar using camera basis
   const me = controls.getObject().position.clone();
