@@ -49,7 +49,9 @@ html,body{height:100%;margin:0;background:var(--deep);color:var(--pearl);font-fa
 #fade.show{opacity:1}
 
 /* ---------- Mobile touch controls ---------- */
-body.mobile #touchUI{display:block}
+body.mobile #touchUI{ display:none; }                /* hidden by default on mobile */
+body.mobile #touchUI:not(.hidden){ display:block; }  /* only when gameplay starts */
+
 #touchUI{position:fixed;inset:0;z-index:20;pointer-events:none}
 .joy{
   position:fixed; width:140px; height:140px; border-radius:50%;

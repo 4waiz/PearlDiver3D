@@ -120,8 +120,8 @@ const over = add(`<div id="over" class="panel card hidden">
 </div>`);
 
 /* Radar + legend */
-const radarWrap = add(`<div id="radarWrap"><canvas id="radar" width="180" height="180"></canvas></div>`);
-const legend = add(`<div id="legend"><span><b class="boat"></b>Boat</span>&nbsp;&nbsp;<span><b class="island"></b>Island</span>&nbsp;&nbsp;<span><b class="pearl"></b>Pearls</span></div>`);
+const radarWrap = add(`<div id="radarWrap" class="hidden"><canvas id="radar" width="180" height="180"></canvas></div>`);
+const legend = add(`<div id="legend" class="hidden"><span><b class="boat"></b>Boat</span>&nbsp;&nbsp;<span><b class="island"></b>Island</span>&nbsp;&nbsp;<span><b class="pearl"></b>Pearls</span></div>`);
 const radar = radarWrap.querySelector('#radar'); const rctx = radar.getContext('2d');
 
 /* Underwater tint overlay */
@@ -129,15 +129,31 @@ const tint = document.createElement('div');
 tint.style.cssText = `position:fixed;inset:0;pointer-events:none;z-index:6;background:radial-gradient(circle at 50% 60%, rgba(0,110,155,.25), rgba(0,70,110,.65));opacity:0;transition:opacity .25s ease;`;
 document.body.appendChild(tint);
 
+/* ------------ UI visibility helpers (map & touch) ------------ */
+const touchLayer = document.getElementById('touchUI');
+function setTouchUI(visible){
+  const isTouch = document.body.classList.contains('mobile');
+  if (!isTouch) return;
+  touchLayer.classList.toggle('hidden', !visible);
+}
+function setMapUI(visible){
+  radarWrap.classList.toggle('hidden', !visible);
+  legend.classList.toggle('hidden', !visible);
+}
+// start hidden on load
+setTouchUI(false); setMapUI(false);
+
 /* ------------ Show/Hide helpers ------------ */
 function show(p){
   [menu,modePanel,storyPanel,cinema,pausePanel,how,settings,board,credits,over].forEach(x=>x.classList.add('hidden'));
   p.classList.remove('hidden'); hud.classList.add('hidden'); quest.classList.add('hidden');
+  setTouchUI(false); setMapUI(false);
   controls.unlock(); state.running=false;
 }
 function hideAll(){
   [menu,modePanel,storyPanel,cinema,pausePanel,how,settings,board,credits,over].forEach(x=>x.classList.add('hidden'));
   hud.classList.remove('hidden'); quest.classList.remove('hidden');
+  setTouchUI(false); setMapUI(false);
 }
 
 /* ------------ Buttons ------------ */
@@ -181,19 +197,17 @@ const camera = new THREE.PerspectiveCamera(70,innerWidth/innerHeight,.1,4000); c
 const controls = new PointerLockControls(camera,document.body); scene.add(controls.getObject());
 addEventListener('resize',()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
 
-/* Desktop pointer-lock only */
+/* Desktop pointer-lock only; mobile detected but UI shown later */
 const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints>0);
-if (isTouch) { document.body.classList.add('mobile'); qs('#touchUI')?.classList.remove('hidden'); }
+if (isTouch) document.body.classList.add('mobile');
 document.addEventListener('mousedown',()=>{ if(!isTouch && state.running && !controls.isLocked) controls.lock(); });
 
 /* BLOCK mobile zoom/gestures when using joysticks */
 if (isTouch) {
   const uiLayer = document.getElementById('touchUI');
-  // iOS gesture events
   ['gesturestart','gesturechange','gestureend'].forEach(ev => {
     document.addEventListener(ev, e => e.preventDefault(), { passive: false });
   });
-  // Prevent default scrolling/zooming on our UI layer
   ['touchstart','touchmove','touchend','touchcancel'].forEach(ev => {
     uiLayer.addEventListener(ev, e => e.preventDefault(), { passive: false });
   });
@@ -276,8 +290,21 @@ function startAdventure(){ resetWorld(); state.mode='adventure'; state.timeLimit
 function beginChapter(i,fresh=false){ resetWorld(); state.mode='story'; state.chapterIndex=i; const ch=CHAPTERS[i]; state.chapter=ch; state.timeLimit=ch.time; state.score=fresh?0:state.score; ch.setup(); playIntroThen(()=>{ prompt.innerHTML=`<h3>${ch.name}</h3><p>${ch.quest}</p>`; prompt.classList.remove('hidden'); setTimeout(()=>prompt.classList.add('hidden'),2600); setQuest(ch.quest); }); }
 function endChapter(){ state.running=false; controls.unlock(); const last=(state.mode==='story'&&state.chapterIndex===CHAPTERS.length-1); qs('#overTitle').textContent= last?'Season Complete — You Win!':'Mission Complete'; qs('#finalScore').textContent=state.score; show(over); if(state.mode==='story' && !last) state.chapterIndex++; }
 function playIntroThen(after){ controls.getObject().position.set(0,6,60); camera.lookAt(-30,6,-200); hideAll(); cinema.classList.remove('hidden'); state.afterIntro=after; }
-function endIntro(){ cinema.classList.add('hidden'); state.startTime=performance.now(); state.running=true; if(typeof state.afterIntro==='function') state.afterIntro(); if(!isTouch) controls.lock(); }
-function resume(){ pausePanel.classList.add('hidden'); if(!isTouch) controls.lock(); state.paused=false; }
+function endIntro(){
+  cinema.classList.add('hidden');
+  state.startTime=performance.now();
+  state.running=true;
+  setMapUI(true);           // show radar
+  setTouchUI(true);         // show touch on mobile
+  if(!isTouch) controls.lock();
+  if(typeof state.afterIntro==='function') state.afterIntro();
+}
+function resume(){
+  pausePanel.classList.add('hidden');
+  setTouchUI(true);         // back to gameplay
+  if(!isTouch) controls.lock();
+  state.paused=false;
+}
 
 /* World helpers */
 function resetWorld(){ [...oysters,...pearls,...jellies,...artifacts,...fish].forEach(m=>scene.remove(m)); oysters=[]; pearls=[]; jellies=[]; artifacts=[]; fish=[]; if(stars){scene.remove(stars); stars=null;} dayLighting(); controls.getObject().position.set(0,6,60); [prompt,cinema].forEach(x=>x.classList.add('hidden')); quest.classList.add('hidden'); }
@@ -290,7 +317,17 @@ function addArtifact(kind){ if(kind==='compass'){ const g=new THREE.TorusKnotGeo
 
 /* Input / movement */
 const keys={};
-addEventListener('keydown',e=>{ keys[e.code]=true; if(e.code==='KeyP'){ state.paused=!state.paused; pausePanel.classList.toggle('hidden',!state.paused); if(state.paused) controls.unlock(); else if(!isTouch) controls.lock(); } if(e.code==='KeyE'){ interact(); } if(e.code==='KeyM'){ master.gain.value = master.gain.value>0 ? 0 : .6; }});
+addEventListener('keydown',e=>{
+  keys[e.code]=true;
+  if(e.code==='KeyP'){
+    state.paused=!state.paused;
+    pausePanel.classList.toggle('hidden',!state.paused);
+    if(state.paused){ controls.unlock(); setTouchUI(false); }
+    else { if(!isTouch) controls.lock(); setTouchUI(true); }
+  }
+  if(e.code==='KeyE'){ interact(); }
+  if(e.code==='KeyM'){ master.gain.value = master.gain.value>0 ? 0 : .6; }
+});
 addEventListener('keyup',e=> keys[e.code]=false);
 
 const vel=new THREE.Vector3();
@@ -340,14 +377,16 @@ function bindStick(rootId,out){
   root.addEventListener('pointercancel',up);
   reset();
 }
-if(isTouch){
+
+const isMobile = document.body.classList.contains('mobile');
+if(isMobile){
   bindStick('joyL',leftStick); bindStick('joyR',rightStick);
   qs('#tUp')   ?.addEventListener('touchstart',()=>tUp=true,{passive:false});
   qs('#tUp')   ?.addEventListener('touchend',()=>tUp=false,{passive:false});
   qs('#tDown') ?.addEventListener('touchstart',()=>tDown=true,{passive:false});
   qs('#tDown') ?.addEventListener('touchend',()=>tDown=false,{passive:false});
   qs('#tUse')  ?.addEventListener('touchstart',()=>interact(),{passive:false});
-  qs('#tPause')?.addEventListener('touchstart',()=>{ state.paused=!state.paused; pausePanel.classList.toggle('hidden',!state.paused); },{passive:false});
+  qs('#tPause')?.addEventListener('touchstart',()=>{ state.paused=!state.paused; pausePanel.classList.toggle('hidden',!state.paused); if(state.paused){setTouchUI(false);} else {setTouchUI(true);} },{passive:false});
 }
 
 /* Movement step */
@@ -364,7 +403,7 @@ function step(dt){
   if(keys['ControlLeft']||keys['ControlRight']) vel.y-=1;
 
   // Mobile sticks
-  if(isTouch){
+  if(isMobile){
     vel.x += leftStick.dx;
     vel.z += -leftStick.dy;      // drag up = forward
     if(tUp)   vel.y += 1;
@@ -428,7 +467,7 @@ function updateHUD(){ hud.classList.remove('hidden'); const rem=Math.max(0,state
 function saveScore(){ const name=(qs('#playerName').value||'Anon').slice(0,30); const row={name,score:state.score,when:Date.now()}; const key='pq3d.leaders'; const arr=JSON.parse(localStorage.getItem(key)||'[]'); arr.push(row); arr.sort((a,b)=>b.score-a.score); localStorage.setItem(key, JSON.stringify(arr.slice(0,20))); renderLeaders(); show(board); }
 function renderLeaders(){ const key='pq3d.leaders'; const arr=JSON.parse(localStorage.getItem(key)||'[]'); const ol=qs('#leaders'); ol.innerHTML = arr.map(r=>`<li>${r.name} — <b>${r.score}</b></li>`).join('') || '<li>No scores yet</li>'; }
 
-/* -------- Radar drawing (arrow flipped 180°) -------- */
+/* -------- Radar drawing (arrow 180°) -------- */
 function drawRadar(){
   const ctx=rctx, W=radar.width, H=radar.height, cx=W/2, cy=H/2;
   ctx.clearRect(0,0,W,H);
