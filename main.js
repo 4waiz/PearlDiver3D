@@ -2,12 +2,13 @@ import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import { Water } from 'three/examples/jsm/objects/Water2.js';
 
-/* ---------- Quick DOM helpers ---------- */
+/* ---------- Small DOM helpers ---------- */
 const UI = document.querySelector('#ui');
 const add = (html) => { const el = document.createElement('div'); el.innerHTML = html.trim(); const node = el.firstChild; UI.appendChild(node); return node; };
 const qs = (s, root=document) => root.querySelector(s);
+const on = (sel, fn) => qs(sel).addEventListener('click', fn);
 
-/* ---------- Build UI (menus + hud) ---------- */
+/* ---------- HUD + Panels ---------- */
 const hud = add(`<div id="hud" class="bubblebar hidden">
   <div class="hud-item"><strong>Time</strong> <span id="time">05:00</span></div>
   <div class="hud-item o2wrap"><strong>O₂</strong>
@@ -17,16 +18,15 @@ const hud = add(`<div id="hud" class="bubblebar hidden">
   <div class="hud-item"><strong>Bank</strong> x<span id="mult">1.0</span></div>
   <div class="hud-item"><strong>Carried</strong> <span id="carried">0</span></div>
 </div>`);
-
 const quest = add(`<div id="quest" class="chip hidden">Quest goes here…</div>`);
 const cross = add(`<div id="crosshair">+</div>`);
 
+/* Main menu — now with Start Game */
 const menu = add(`<div id="menu" class="panel card">
   <h1>Pearl Quest 3D</h1>
   <p class="tag">Innovate Your Heritage Game</p>
   <div class="buttons">
-    <button id="btnStory" class="pill">Story</button>
-    <button id="btnAdventure" class="pill">Free Dive</button>
+    <button id="btnStart" class="pill big">Start Game</button>
     <button id="btnHow" class="ghost">How to Play</button>
     <button id="btnSettings" class="ghost">Settings</button>
     <button id="btnLeaderboard" class="ghost">Leaderboard</button>
@@ -34,12 +34,34 @@ const menu = add(`<div id="menu" class="panel card">
   </div>
 </div>`);
 
+/* Mode select (Story / Free Dive) */
+const modePanel = add(`<div id="mode" class="panel card hidden">
+  <h2>Select Mode</h2>
+  <div class="buttons">
+    <button id="chooseStory" class="pill big">Story Mode</button>
+    <button id="chooseFree" class="pill big">Free Dive (Score)</button>
+  </div>
+  <button class="back pill">Back</button>
+</div>`);
+
+/* Story → chapter select */
+const storyPanel = add(`<div id="story" class="panel card hidden">
+  <h2>Choose Chapter</h2>
+  <div id="chapters" class="buttons"></div>
+  <div class="buttons">
+    <button id="continueStory" class="ghost">Continue Last Chapter</button>
+    <button class="back pill">Back</button>
+  </div>
+</div>`);
+
+/* Cinematic intro */
 const cinema = add(`<div id="cinema" class="panel card hidden">
   <h2>Welcome to <span>Pearl Quest 3D</span></h2>
   <p>Begin at the island — click below when ready.</p>
   <button id="continueBtn" class="pill big">Click to Dive</button>
 </div>`);
 
+/* Pause */
 const pausePanel = add(`<div id="pause" class="panel card hidden">
   <h2>Paused</h2>
   <div class="buttons">
@@ -50,6 +72,7 @@ const pausePanel = add(`<div id="pause" class="panel card hidden">
   <p class="hint">Press <b>P</b> to toggle pause.</p>
 </div>`);
 
+/* How / Settings / Leaderboard / Credits */
 const how = add(`<div id="how" class="panel card hidden">
   <h2>How to Play</h2>
   <ul class="how">
@@ -104,41 +127,46 @@ const over = add(`<div id="over" class="panel card hidden">
   </div>
 </div>`);
 
-/* ---------- Underwater tint overlay ---------- */
+/* Blue underwater tint overlay (fades in below surface) */
 const tint = document.createElement('div');
 tint.style.cssText = `position:fixed;inset:0;pointer-events:none;z-index:6;
-background:radial-gradient(circle at 50% 60%, rgba(0,110,155,.25), rgba(0,70,110,.65)); 
-opacity:0; transition:opacity .25s ease;`;
+background:radial-gradient(circle at 50% 60%, rgba(0,110,155,.25), rgba(0,70,110,.65));
+opacity:0;transition:opacity .25s ease;`;
 document.body.appendChild(tint);
 
-/* ---------- Utility to wire buttons ---------- */
-const on = (sel, fn) => qs(sel).addEventListener('click', fn);
-const show = (p) => {
-  [menu, cinema, pausePanel, how, settings, board, credits, over].forEach(x=>x.classList.add('hidden'));
+/* ---------- Show/Hide helpers ---------- */
+function show(p){
+  [menu, modePanel, storyPanel, cinema, pausePanel, how, settings, board, credits, over].forEach(x=>x.classList.add('hidden'));
   p.classList.remove('hidden'); hud.classList.add('hidden'); quest.classList.add('hidden');
-  controls.unlock(); state.running = false;
-};
-const hideAll = () => {
-  [menu, cinema, pausePanel, how, settings, board, credits, over].forEach(x=>x.classList.add('hidden'));
+  controls.unlock(); state.running=false;
+}
+function hideAll(){
+  [menu, modePanel, storyPanel, cinema, pausePanel, how, settings, board, credits, over].forEach(x=>x.classList.add('hidden'));
   hud.classList.remove('hidden'); quest.classList.remove('hidden');
-};
+}
 
-/* ---------- Buttons (everything wired) ---------- */
-on('#btnStory', startStory);
-on('#btnAdventure', startAdventure);
-on('#btnHow', ()=>show(how));
+/* ---------- Wire buttons ---------- */
+on('#btnStart', () => show(modePanel));
+modePanel.querySelector('.back').addEventListener('click', ()=> show(menu));
+on('#chooseStory', () => { renderChapters(); show(storyPanel); });
+on('#chooseFree',  () => startAdventure());
+storyPanel.querySelector('.back').addEventListener('click', ()=> show(modePanel));
+on('#continueStory', ()=> beginChapter(state.chapterIndex || 0, false));
+
+on('#btnHow',      ()=>show(how));
 on('#btnSettings', ()=>show(settings));
 on('#btnLeaderboard', ()=>{ renderLeaders(); show(board); });
-on('#btnCredits', ()=>show(credits));
+on('#btnCredits',  ()=>show(credits));
 on('#continueBtn', ()=>endIntro());
-on('#resumeBtn', resume);
-on('#restartBtn', ()=>{ state.mode==='story' ? beginChapter(state.chapterIndex, true) : startAdventure(); });
-on('#menuBtn', ()=>show(menu));
-on('#again', startAdventure);
-on('#saveBtn', saveScore);
+on('#resumeBtn',   resume);
+on('#restartBtn',  ()=>{ state.mode==='story' ? beginChapter(state.chapterIndex,true) : startAdventure(); });
+on('#menuBtn',     ()=>show(menu));
+on('#again',       startAdventure);
+on('#saveBtn',     saveScore);
+
 settings.querySelector('#sens').addEventListener('input', e=> state.sens=parseFloat(e.target.value));
 on('#muteBtn', ()=> master.gain.value = master.gain.value>0 ? 0 : .6);
-on('#hqBtn', ()=> state.hq = !state.hq);
+on('#hqBtn',   ()=> state.hq = !state.hq);
 how.querySelector('.back').addEventListener('click', ()=>show(menu));
 settings.querySelector('.back').addEventListener('click', ()=>show(menu));
 board.querySelector('.back').addEventListener('click', ()=>show(menu));
@@ -154,50 +182,60 @@ const collect = ()=>{ tone(900,.12,'sine',.4); tone(1350,.12,'sine',.25); };
 const renderer = new THREE.WebGLRenderer({canvas:document.getElementById('bg'), antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(innerWidth,innerHeight);
 const scene = new THREE.Scene(); scene.background = new THREE.Color(0x87c9f5); scene.fog = new THREE.FogExp2(0x8ed0f7,.0022);
-const camera = new THREE.PerspectiveCamera(70,innerWidth/innerHeight,.1,4000);
-camera.position.set(0,6,60);
-
+const camera = new THREE.PerspectiveCamera(70,innerWidth/innerHeight,.1,4000); camera.position.set(0,6,60);
 const controls = new PointerLockControls(camera,document.body); scene.add(controls.getObject());
 document.addEventListener('mousedown',()=>{ if(state.running && !controls.isLocked) controls.lock(); });
 addEventListener('resize',()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
 
-// lights + sun
+/* Lights + sun */
 const hemi = new THREE.HemisphereLight(0xcde8ff,0x416d66,.95); scene.add(hemi);
 const sun  = new THREE.DirectionalLight(0xffeecc,1.0); sun.position.set(160,220,100); scene.add(sun);
 
-// sky + clouds
+/* Sky + clouds */
 const sky = new THREE.Mesh(new THREE.SphereGeometry(3000,32,32), new THREE.MeshBasicMaterial({color:0x87c9f5, side:THREE.BackSide})); scene.add(sky);
 const clouds = makeClouds(16); scene.add(clouds);
 
-// Water2 ocean (double-sided so visible from below)
-const waterNormals = new THREE.TextureLoader().load('https://threejs.org/examples/textures/waternormals.jpg',t=>{ t.wrapS=t.wrapT=THREE.RepeatWrapping; });
-const water = new Water(new THREE.PlaneGeometry(4000,4000), { color:'#0a7fb0', scale:6, flowDirection:new THREE.Vector2(1,1), textureWidth:1024, textureHeight:1024, normalMap0:waterNormals, normalMap1:waterNormals });
+/* Water2 ocean (double-sided so it renders from below) */
+const waterNormals = new THREE.TextureLoader().load('https://threejs.org/examples/textures/waternormals.jpg', t=>{ t.wrapS=t.wrapT=THREE.RepeatWrapping; });
+const water = new Water(new THREE.PlaneGeometry(4000,4000), {
+  color:'#0a7fb0', scale:6, flowDirection:new THREE.Vector2(1,1),
+  textureWidth:1024, textureHeight:1024, normalMap0:waterNormals, normalMap1:waterNormals
+});
 water.rotation.x = -Math.PI/2; water.position.y = 0.15; scene.add(water);
-water.material.side = THREE.DoubleSide;  // key for underside visibility
+water.material.side = THREE.DoubleSide;
 
-// seabed + caustics
-const causticsTex = new THREE.DataTexture(genCaustics(256,256),256,256,THREE.RGBAFormat); causticsTex.needsUpdate=true; causticsTex.wrapS=causticsTex.wrapT=THREE.RepeatWrapping;
-const caust = new THREE.Mesh(new THREE.PlaneGeometry(4000,4000), new THREE.MeshBasicMaterial({map:causticsTex,color:0xe6c88f,transparent:true,opacity:.08})); caust.rotation.x=-Math.PI/2; caust.position.y=-2; scene.add(caust);
-const seabed = new THREE.Mesh(new THREE.PlaneGeometry(4000,4000,220,220), new THREE.MeshPhongMaterial({color:0x7c7a5e,flatShading:true})); seabed.rotation.x=-Math.PI/2; displacePlane(seabed.geometry,(x,z)=>noise2(x*.003,z*.003)*22-36); scene.add(seabed);
+/* Seabed + caustics */
+const causticsTex = new THREE.DataTexture(genCaustics(256,256),256,256,THREE.RGBAFormat);
+causticsTex.needsUpdate=true; causticsTex.wrapS=causticsTex.wrapT=THREE.RepeatWrapping;
+const caust = new THREE.Mesh(new THREE.PlaneGeometry(4000,4000), new THREE.MeshBasicMaterial({map:causticsTex,color:0xe6c88f,transparent:true,opacity:.08}));
+caust.rotation.x=-Math.PI/2; caust.position.y=-2; scene.add(caust);
+const seabed = new THREE.Mesh(new THREE.PlaneGeometry(4000,4000,220,220), new THREE.MeshPhongMaterial({color:0x7c7a5e,flatShading:true}));
+seabed.rotation.x=-Math.PI/2; displacePlane(seabed.geometry,(x,z)=>noise2(x*.003,z*.003)*22-36); scene.add(seabed);
 
-// island + palms
+/* Island + palms */
 const ISLAND_Y=3.2; const island=new THREE.Group(); scene.add(island);
 const islandMesh = new THREE.Mesh(new THREE.CircleGeometry(120,64), new THREE.MeshPhongMaterial({color:0xd6c29a})); islandMesh.rotation.x=-Math.PI/2; islandMesh.position.y=ISLAND_Y; island.add(islandMesh);
 for(let i=0;i<18;i++){ const p=makePalm(); const r=75+Math.random()*35, a=Math.random()*Math.PI*2; p.position.set(Math.cos(a)*r,ISLAND_Y,Math.sin(a)*r); island.add(p); }
-const foamRing = new THREE.Mesh(new THREE.RingGeometry(120,126,180), new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.24,side:THREE.DoubleSide})); foamRing.rotation.x=-Math.PI/2; foamRing.position.y=.16; scene.add(foamRing);
+const foamRing = new THREE.Mesh(new THREE.RingGeometry(120,126,180), new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.24,side:THREE.DoubleSide}));
+foamRing.rotation.x=-Math.PI/2; foamRing.position.y=.16; scene.add(foamRing);
 
-// dhow (bank)
+/* Dhow (bank) */
 const dhow = new THREE.Group();
 const hull = new THREE.Mesh(new THREE.BoxGeometry(40,8,14), new THREE.MeshPhongMaterial({color:0x7a5533})); hull.position.y=2; hull.rotation.y=.3; dhow.add(hull);
 const mast = new THREE.Mesh(new THREE.CylinderGeometry(.45,.45,26,10), new THREE.MeshPhongMaterial({color:0x7a5533})); mast.position.set(0,13,0); dhow.add(mast);
 const sail = new THREE.Mesh(new THREE.PlaneGeometry(28,16,20,1), new THREE.MeshPhongMaterial({color:0xffffff,side:THREE.DoubleSide})); sail.position.set(11,10,0); sail.rotation.set(0,Math.PI/2.4,0); dhow.add(sail);
 dhow.position.set(-30,1,-200); scene.add(dhow);
-const bankRing = new THREE.Mesh(new THREE.TorusGeometry(22,.7,16,64), new THREE.MeshBasicMaterial({color:0xffe28a})); bankRing.rotation.x=Math.PI/2; bankRing.position.set(-30,-6,-200); scene.add(bankRing);
+const bankRing = new THREE.Mesh(new THREE.TorusGeometry(22,.7,16,64), new THREE.MeshBasicMaterial({color:0xffe28a}));
+bankRing.rotation.x=Math.PI/2; bankRing.position.set(-30,-6,-200); scene.add(bankRing);
 
-/* ---------- Spawners: oysters, jellies, fish ---------- */
+/* Spawners */
 let oysters=[],pearls=[],jellies=[],artifacts=[],fish=[],stars=null;
+
 function spawnOysters(n){
-  const oG=new THREE.SphereGeometry(2,16,16), oM1=new THREE.MeshPhongMaterial({color:0xa28f72,flatShading:true}), oM2=new THREE.MeshPhongMaterial({color:0xc1b496,flatShading:true}), pM=new THREE.MeshPhongMaterial({color:0xffffff,emissive:0xaa8844,shininess:120,specular:0xffffff});
+  const oG=new THREE.SphereGeometry(2,16,16),
+        oM1=new THREE.MeshPhongMaterial({color:0xa28f72,flatShading:true}),
+        oM2=new THREE.MeshPhongMaterial({color:0xc1b496,flatShading:true}),
+        pM =new THREE.MeshPhongMaterial({color:0xffffff,emissive:0xaa8844,shininess:120,specular:0xffffff});
   for(let i=0;i<n;i++){
     const top=new THREE.Mesh(oG,oM2), bot=new THREE.Mesh(oG,oM1); top.scale.set(1.2,.4,1.2); bot.scale.set(1.2,.4,1.2); bot.rotation.z=Math.PI;
     const o=new THREE.Group(); o.add(top); o.add(bot);
@@ -206,53 +244,92 @@ function spawnOysters(n){
     const p=new THREE.Mesh(new THREE.SphereGeometry(.8,16,16), pM.clone()); p.position.set(x,y+.8,z); p.userData.active=true; scene.add(p); pearls.push(p);
   }
 }
-function spawnJellies(n){ for(let i=0;i<n;i++){ const j=makeJelly(); j.position.set(rand(-1200,1200),-20,rand(-1200,1200)); j.userData.phase=Math.random()*Math.PI*2; jellies.push(j); scene.add(j);} }
+function spawnJellies(n){
+  for(let i=0;i<n;i++){ const j=makeJelly(); j.position.set(rand(-1200,1200),-20,rand(-1200,1200)); j.userData.phase=Math.random()*Math.PI*2; jellies.push(j); scene.add(j); }
+}
 function spawnFish(n=60){
   const mat = new THREE.MeshPhongMaterial({color:0x6be0ff, emissive:0x1c496b, flatShading:true});
   for(let i=0;i<n;i++){
     const body=new THREE.Mesh(new THREE.ConeGeometry(0.6,1.8,8), mat.clone());
     const f=new THREE.Group(); body.rotation.x=Math.PI/2; f.add(body);
     f.position.set(rand(-1400,1400), rand(-60,-8), rand(-1400,1400));
-    f.userData={angle:Math.random()*Math.PI*2, speed: 6+Math.random()*6, radius: 20+Math.random()*40, height: f.position.y, sway: Math.random()*2 };
+    f.userData={angle:Math.random()*Math.PI*2, speed: 6+Math.random()*6, height: f.position.y, sway: Math.random()*2 };
     scene.add(f); fish.push(f);
   }
 }
 
-/* ---------- Story / game state ---------- */
+/* Game state + chapters */
 const state={running:false,paused:false,mode:null,chapterIndex:0,chapter:null,startTime:0,timeLimit:300,score:0,carried:0,mult:1,oxy:100,hq:true,sens:1};
 const CHAPTERS=[
-  {name:'Chapter 1 — Shallow Waters', quest:'Collect 5 pearls and bank them', time:240, setup:()=>{ dayLighting(); spawnOysters(30); spawnJellies(8); spawnFish(40);} },
-  {name:'Chapter 2 — The Falcon’s Compass', quest:'Find the Falcon Compass and bank 1 pearl', time:260, setup:()=>{ sunsetLighting(); spawnOysters(25); spawnJellies(12); addArtifact('compass'); spawnFish(60);} },
-  {name:'Chapter 3 — Moonlight Harvest', quest:'Night dive: collect 10 pearls and avoid jellies', time:240, setup:()=>{ nightLighting(); addStars(); spawnOysters(36); spawnJellies(16); spawnFish(80);} },
+  {name:'Chapter 1 — Shallow Waters',    quest:'Collect 5 pearls and bank them',                     time:240, setup:()=>{ dayLighting();  spawnOysters(30); spawnJellies(8);  spawnFish(40);} },
+  {name:'Chapter 2 — The Falcon’s Compass', quest:'Find the Falcon Compass and bank 1 pearl',        time:260, setup:()=>{ sunsetLighting(); spawnOysters(25); spawnJellies(12); addArtifact('compass'); spawnFish(60);} },
+  {name:'Chapter 3 — Moonlight Harvest', quest:'Night dive: collect 10 pearls and avoid jellies',    time:240, setup:()=>{ nightLighting();  addStars();     spawnOysters(36); spawnJellies(16); spawnFish(80);} },
 ];
 
-function startAdventure(){ resetWorld(); state.mode='adventure'; state.timeLimit=300; state.score=0; state.carried=0; state.mult=1; state.oxy=100; playIntroThen(()=>{ spawnOysters(60); spawnJellies(18); spawnFish(90); setQuest('Collect as many pearls as you can and bank them!'); }); }
-function startStory(){ resetWorld(); state.mode='story'; state.chapterIndex=0; beginChapter(0,true); }
-function beginChapter(i,fresh=false){ resetWorld(); state.chapterIndex=i; const ch=CHAPTERS[i]; state.chapter=ch; state.timeLimit=ch.time; state.score=fresh?0:state.score; ch.setup(); playIntroThen(()=>{ prompt.innerHTML=`<h3>${ch.name}</h3><p>${ch.quest}</p>`; prompt.classList.remove('hidden'); setTimeout(()=>prompt.classList.add('hidden'),2600); setQuest(ch.quest); }); }
-function endChapter(){ state.running=false; controls.unlock(); const last=(state.mode==='story' && state.chapterIndex===CHAPTERS.length-1); qs('#overTitle').textContent = last? 'Season Complete — You Win!' : 'Mission Complete'; qs('#finalScore').textContent = state.score; show(over); if(state.mode==='story' && !last) state.chapterIndex++; }
+function renderChapters(){
+  const wrap = qs('#chapters'); wrap.innerHTML='';
+  CHAPTERS.forEach((ch,i)=>{
+    const b=document.createElement('button'); b.className='pill'; b.textContent=ch.name.replace('Chapter ','Ch ');
+    b.addEventListener('click',()=> beginChapter(i,true)); wrap.appendChild(b);
+  });
+}
+
+function startAdventure(){
+  resetWorld(); state.mode='adventure'; state.timeLimit=300; state.score=0; state.carried=0; state.mult=1; state.oxy=100;
+  playIntroThen(()=>{ spawnOysters(60); spawnJellies(18); spawnFish(90); setQuest('Collect as many pearls as you can and bank them!'); });
+}
+function beginChapter(i,fresh=false){
+  resetWorld(); state.mode='story'; state.chapterIndex=i; const ch=CHAPTERS[i]; state.chapter=ch; state.timeLimit=ch.time; state.score=fresh?0:state.score;
+  ch.setup(); playIntroThen(()=>{ prompt.innerHTML=`<h3>${ch.name}</h3><p>${ch.quest}</p>`; prompt.classList.remove('hidden'); setTimeout(()=>prompt.classList.add('hidden'),2600); setQuest(ch.quest); });
+}
+function endChapter(){
+  state.running=false; controls.unlock();
+  const last=(state.mode==='story' && state.chapterIndex===CHAPTERS.length-1);
+  qs('#overTitle').textContent = last ? 'Season Complete — You Win!' : 'Mission Complete';
+  qs('#finalScore').textContent = state.score; show(over);
+  if(state.mode==='story' && !last) state.chapterIndex++;
+}
 
 function playIntroThen(after){ controls.getObject().position.set(0,6,60); camera.lookAt(-30,6,-200); hideAll(); cinema.classList.remove('hidden'); state.afterIntro=after; }
 function endIntro(){ cinema.classList.add('hidden'); state.startTime=performance.now(); state.running=true; if(typeof state.afterIntro==='function') state.afterIntro(); controls.lock(); }
 function resume(){ pausePanel.classList.add('hidden'); controls.lock(); state.paused=false; }
 
-/* ---------- Helpers ---------- */
-function resetWorld(){ [...oysters,...pearls,...jellies,...artifacts,...fish].forEach(m=>scene.remove(m)); oysters=[]; pearls=[]; jellies=[]; artifacts=[]; fish=[]; if(stars){scene.remove(stars); stars=null;} dayLighting(); controls.getObject().position.set(0,6,60); [prompt,cinema].forEach(x=>x.classList.add('hidden')); quest.classList.add('hidden'); }
+/* World helpers */
+function resetWorld(){
+  [...oysters,...pearls,...jellies,...artifacts,...fish].forEach(m=>scene.remove(m));
+  oysters=[]; pearls=[]; jellies=[]; artifacts=[]; fish=[];
+  if(stars){ scene.remove(stars); stars=null; }
+  dayLighting();
+  controls.getObject().position.set(0,6,60);
+  [prompt,cinema].forEach(x=>x.classList.add('hidden')); quest.classList.add('hidden');
+}
 function setQuest(txt){ quest.textContent=txt; quest.classList.remove('hidden'); }
 function dayLighting(){ scene.background.set(0x87c9f5); scene.fog.color.set(0x8ed0f7); scene.fog.density=.0022; hemi.intensity=.95; sun.color.set(0xffeecc); sun.intensity=1.0; tint.style.opacity=0; }
 function sunsetLighting(){ scene.background.set(0xffc387); scene.fog.color.set(0xff9866); scene.fog.density=.003; hemi.intensity=.8; sun.color.set(0xffc387); sun.intensity=.8; tint.style.opacity=0; }
 function nightLighting(){ scene.background.set(0x03161c); scene.fog.color.set(0x0b3c4a); scene.fog.density=.010; hemi.intensity=.5; sun.intensity=.25; tint.style.opacity=0.15; }
-function addStars(){ const starGeo=new THREE.BufferGeometry(); const N=2000; const pos=new Float32Array(N*3); for(let i=0;i<N;i++){ const r=2200+Math.random()*400, th=Math.random()*Math.PI*2, ph=Math.random()*Math.PI; pos[i*3]=Math.sin(ph)*Math.cos(th)*r; pos[i*3+1]=Math.cos(ph)*r; pos[i*3+2]=Math.sin(ph)*Math.sin(th)*r; } starGeo.setAttribute('position', new THREE.BufferAttribute(pos,3)); const starMat=new THREE.PointsMaterial({ color:0xffffff, size:2, sizeAttenuation:true }); stars=new THREE.Points(starGeo, starMat); scene.add(stars); }
-function addArtifact(kind){ if(kind==='compass'){ const g=new THREE.TorusKnotGeometry(1.2,.35,80,12); const m=new THREE.MeshPhongMaterial({color:0xffdd88,emissive:0x553300,shininess:80}); const mesh=new THREE.Mesh(g,m); mesh.position.set(rand(-900,900),-24,rand(-900,900)); mesh.userData.kind='compass'; scene.add(mesh); artifacts.push(mesh); } const chest=new THREE.Mesh(new THREE.BoxGeometry(3,2,2), new THREE.MeshPhongMaterial({color:0x8b5a2b})); chest.position.set(rand(-900,900),-28,rand(-900,900)); chest.userData.kind='chest'; scene.add(chest); artifacts.push(chest); }
+function addStars(){ const starGeo=new THREE.BufferGeometry(); const N=2000; const pos=new Float32Array(N*3);
+  for(let i=0;i<N;i++){ const r=2200+Math.random()*400, th=Math.random()*Math.PI*2, ph=Math.random()*Math.PI;
+    pos[i*3]=Math.sin(ph)*Math.cos(th)*r; pos[i*3+1]=Math.cos(ph)*r; pos[i*3+2]=Math.sin(ph)*Math.sin(th)*r; }
+  starGeo.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  const starMat=new THREE.PointsMaterial({ color:0xffffff, size:2, sizeAttenuation:true });
+  stars=new THREE.Points(starGeo, starMat); scene.add(stars);
+}
+function addArtifact(kind){
+  if(kind==='compass'){ const g=new THREE.TorusKnotGeometry(1.2,.35,80,12); const m=new THREE.MeshPhongMaterial({color:0xffdd88,emissive:0x553300,shininess:80});
+    const mesh=new THREE.Mesh(g,m); mesh.position.set(rand(-900,900),-24,rand(-900,900)); mesh.userData.kind='compass'; scene.add(mesh); artifacts.push(mesh); }
+  const chest=new THREE.Mesh(new THREE.BoxGeometry(3,2,2), new THREE.MeshPhongMaterial({color:0x8b5a2b}));
+  chest.position.set(rand(-900,900),-28,rand(-900,900)); chest.userData.kind='chest'; scene.add(chest); artifacts.push(chest);
+}
 
-/* ---------- Input / movement ---------- */
-const keys={};
-addEventListener('keydown',e=>{
-  keys[e.code]=true;
+/* Input / movement */
+const keys = {};
+addEventListener('keydown', e=>{
+  keys[e.code] = true;
   if(e.code==='KeyP'){ state.paused=!state.paused; pausePanel.classList.toggle('hidden',!state.paused); if(state.paused) controls.unlock(); else controls.lock(); }
   if(e.code==='KeyE'){ interact(); }
   if(e.code==='KeyM'){ master.gain.value = master.gain.value>0 ? 0 : .6; }
 });
-addEventListener('keyup',e=> keys[e.code]=false);
+addEventListener('keyup',   e=> keys[e.code] = false);
 
 const vel=new THREE.Vector3();
 function step(dt){
@@ -265,15 +342,13 @@ function step(dt){
   if(keys['Space']) vel.y+=1;
   if(keys['ControlLeft']||keys['ControlRight']) vel.y-=1;
   vel.normalize().multiplyScalar(speed*dt);
-  controls.moveRight(vel.x);
-  controls.moveForward(vel.z);
+  controls.moveRight(vel.x); controls.moveForward(vel.z);
   controls.getObject().position.y+=vel.y;
   controls.getObject().position.y=THREE.MathUtils.clamp(controls.getObject().position.y,-72,40);
 
   const uw=controls.getObject().position.y<0;
   if(uw){
     state.oxy=Math.max(0,state.oxy-0.012*dt*60);
-    // Underwater look: denser blue fog + tint overlay
     scene.fog.density=THREE.MathUtils.lerp(scene.fog.density,.012,.08);
     scene.fog.color.set(0x2a7ea6);
     tint.style.opacity = 0.55;
@@ -288,19 +363,16 @@ function step(dt){
 function interact(){
   if(!state.running||state.paused) return;
   const p=controls.getObject().position;
+  // nearest pearl
   let nearest=null; let dist=4;
-  for(const pr of pearls){
-    if(!pr.userData.active) continue;
-    const d=pr.position.distanceTo(p);
-    if(d<dist){ dist=d; nearest=pr; }
-  }
-  if(nearest){
-    nearest.userData.active=false; nearest.visible=false; state.carried++; collect(); return;
-  }
+  for(const pr of pearls){ if(!pr.userData.active) continue; const d=pr.position.distanceTo(p); if(d<dist){ dist=d; nearest=pr; } }
+  if(nearest){ nearest.userData.active=false; nearest.visible=false; state.carried++; collect(); return; }
+  // bank
   if(p.distanceTo(bankRing.position)<22){
     if(state.carried>0){ state.score+=Math.floor(state.carried*12*state.mult); state.carried=0; state.mult=Math.min(6,state.mult+.8); }
     state.oxy=Math.min(100,state.oxy+.65);
   }
+  // artifacts
   for(const a of artifacts){
     if(a.visible && a.position.distanceTo(p)<4){
       a.visible=false; tone(784,.3,'triangle',.3);
@@ -313,39 +385,42 @@ function interact(){
   }
 }
 
-/* ---------- HUD helpers ---------- */
-const timeEl = qs('#time'), scoreEl = qs('#score'), multEl = qs('#mult'), carriedEl = qs('#carried'), oxyFill = qs('#o2fill');
-function setOxy(v){ v=Math.max(0,Math.min(100,v)); oxyFill.style.width=v+'%'; oxyFill.style.background = v>50 ? 'linear-gradient(90deg,#60eac2,#1aa5a1)' : (v>25 ? 'linear-gradient(90deg,#ffd166,#f3a712)' : 'linear-gradient(90deg,#ef476f,#e63946)'); }
-function updateHUD(){ hud.classList.remove('hidden'); const rem=Math.max(0,state.timeLimit-Math.floor((performance.now()-state.startTime)/1000)); timeEl.textContent=fmt(rem); scoreEl.textContent=state.score; multEl.textContent=state.mult.toFixed(1); carriedEl.textContent=state.carried; setOxy(state.oxy); if(rem<=0) endChapter(); }
+/* HUD + leaderboard */
+const timeEl=qs('#time'), scoreEl=qs('#score'), multEl=qs('#mult'), carriedEl=qs('#carried'), oxyFill=qs('#o2fill');
 const fmt = (t)=> `${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`;
-
-/* ---------- Leaderboard ---------- */
+function setOxy(v){ v=Math.max(0,Math.min(100,v)); oxyFill.style.width=v+'%';
+  oxyFill.style.background = v>50 ? 'linear-gradient(90deg,#60eac2,#1aa5a1)' :
+    (v>25 ? 'linear-gradient(90deg,#ffd166,#f3a712)' : 'linear-gradient(90deg,#ef476f,#e63946)'); }
+function updateHUD(){
+  hud.classList.remove('hidden');
+  const rem=Math.max(0,state.timeLimit-Math.floor((performance.now()-state.startTime)/1000));
+  timeEl.textContent=fmt(rem); scoreEl.textContent=state.score; multEl.textContent=state.mult.toFixed(1); carriedEl.textContent=state.carried;
+  setOxy(state.oxy); if(rem<=0) endChapter();
+}
 function saveScore(){
-  const name = (qs('#playerName').value||'Anon').slice(0,30);
-  const row = { name, score: state.score, when: Date.now() };
-  const key='pq3d.leaders'; const arr = JSON.parse(localStorage.getItem(key)||'[]'); arr.push(row); arr.sort((a,b)=>b.score-a.score); localStorage.setItem(key, JSON.stringify(arr.slice(0,20)));
+  const name=(qs('#playerName').value||'Anon').slice(0,30);
+  const row={name,score:state.score,when:Date.now()};
+  const key='pq3d.leaders'; const arr=JSON.parse(localStorage.getItem(key)||'[]');
+  arr.push(row); arr.sort((a,b)=>b.score-a.score);
+  localStorage.setItem(key, JSON.stringify(arr.slice(0,20)));
   renderLeaders(); show(board);
 }
 function renderLeaders(){
-  const key='pq3d.leaders'; const arr = JSON.parse(localStorage.getItem(key)||'[]');
-  const ol = qs('#leaders'); ol.innerHTML = arr.map(r=>`<li>${r.name} — <b>${r.score}</b></li>`).join('') || '<li>No scores yet</li>';
+  const key='pq3d.leaders'; const arr=JSON.parse(localStorage.getItem(key)||'[]');
+  const ol=qs('#leaders'); ol.innerHTML = arr.map(r=>`<li>${r.name} — <b>${r.score}</b></li>`).join('') || '<li>No scores yet</li>';
 }
 
-/* ---------- Animation loop ---------- */
+/* Animation loop */
 function animate(){
   requestAnimationFrame(animate);
   const now=performance.now(); const dt=(animate._t?(now-animate._t):16)/1000; animate._t=now;
   if(state.running && !state.paused){
     step(dt); updateHUD();
-    // Clouds float
     clouds.children.forEach((c,i)=>{ c.position.x += Math.sin(now*.0001+i)*.02; });
-    // Oysters open/close near player
     const p=controls.getObject().position;
     for(const o of oysters){ const d=o.position.distanceTo(p); o.userData.open+=((d<6?1:0)-o.userData.open)*0.1; o.children[0].rotation.z=-o.userData.open*1.1; }
     pearls.forEach(pr=> pr.rotation.y += dt*1.5);
-    // Jelly float + sting
     jellies.forEach(j=>{ j.userData.phase+=dt*.7; j.position.y=-22+Math.sin(j.userData.phase)*4; j.position.x+=Math.sin(j.userData.phase*.6)*.12; j.position.z+=Math.cos(j.userData.phase*.5)*.12; if(j.position.distanceTo(p)<2.6){ state.oxy=Math.max(0,state.oxy-18*dt*1.5); } });
-    // Fish schooling
     fish.forEach(f=>{ f.userData.angle += dt*(.4 + Math.random()*.2); f.position.x += Math.cos(f.userData.angle)*dt*f.userData.speed; f.position.z += Math.sin(f.userData.angle*.9)*dt*f.userData.speed; f.position.y = f.userData.height + Math.sin(now*.001 + f.userData.sway)*2; });
     caust.material.map.offset.x += dt*0.02; caust.material.map.offset.y += dt*0.04;
   }
@@ -354,7 +429,7 @@ function animate(){
 }
 animate();
 
-/* ---------- Small helpers & geometry ---------- */
+/* Utils & tiny geometry */
 function rand(a,b){return a+Math.random()*(b-a)}
 function noise2(x,y){return(Math.sin(x*2.1+Math.sin(y*1.3))*.5+Math.sin(y*2.7+Math.sin(x*.7))*.5)}
 function displacePlane(g,fn){const p=g.attributes.position;for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i);p.setY(i,fn(x,z))}p.needsUpdate=true;g.computeVertexNormals()}
