@@ -74,3 +74,23 @@ body.mobile #touchUI{display:block}
   .joy .knob{width:56px;height:56px}
   .tbuttons button{width:50px;height:50px}
 }
+
+/* --- Prevent mobile pinch/double-tap zoom in the game layer --- */
+html, body {
+  touch-action: none;               /* disable browser gestures */
+  overscroll-behavior: none;        /* no pull-to-refresh */
+  -webkit-user-select: none;        /* iOS selection off */
+}
+
+#bg,
+#touchUI,
+#touchUI * ,
+.joy,
+.tbuttons,
+.tbuttons button {
+  touch-action: none;               /* no pinch/pan on controls */
+  -ms-touch-action: none;
+}
+
+/* Allow fast tap without zoom on the round buttons */
+.tbuttons button { touch-action: manipulation; }

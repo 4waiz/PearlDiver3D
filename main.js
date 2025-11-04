@@ -186,6 +186,19 @@ const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints>0);
 if (isTouch) { document.body.classList.add('mobile'); qs('#touchUI')?.classList.remove('hidden'); }
 document.addEventListener('mousedown',()=>{ if(!isTouch && state.running && !controls.isLocked) controls.lock(); });
 
+/* BLOCK mobile zoom/gestures when using joysticks */
+if (isTouch) {
+  const uiLayer = document.getElementById('touchUI');
+  // iOS gesture events
+  ['gesturestart','gesturechange','gestureend'].forEach(ev => {
+    document.addEventListener(ev, e => e.preventDefault(), { passive: false });
+  });
+  // Prevent default scrolling/zooming on our UI layer
+  ['touchstart','touchmove','touchend','touchcancel'].forEach(ev => {
+    uiLayer.addEventListener(ev, e => e.preventDefault(), { passive: false });
+  });
+}
+
 /* Lights / sun / sky / clouds */
 const hemi=new THREE.HemisphereLight(0xcde8ff,0x416d66,.95); scene.add(hemi);
 const sun=new THREE.DirectionalLight(0xffeecc,1.0); sun.position.set(160,220,100); scene.add(sun);
@@ -291,19 +304,50 @@ function bindStick(rootId,out){
   const knob=root.querySelector('.knob'); let pid=null, rect=null, radius=0;
   const setKnob=(px,py)=> knob.style.transform=`translate(calc(-50% + ${px}px), calc(-50% + ${py}px))`;
   const reset=()=>{ out.dx=0; out.dy=0; out.active=false; setKnob(0,0); };
-  root.addEventListener('pointerdown',e=>{ if(pid!==null) return; root.setPointerCapture(e.pointerId); pid=e.pointerId; rect=root.getBoundingClientRect(); radius=rect.width*0.5; move(e); out.active=true; });
-  const move=e=>{ if(pid!==e.pointerId) return; const cx=rect.left+radius, cy=rect.top+radius; const dx=e.clientX-cx, dy=e.clientY-cy; const len=Math.hypot(dx,dy)||1; const cl=Math.min(len,radius-20); const nx=dx/len*cl, ny=dy/len*cl; setKnob(nx,ny); out.dx =  dx/ radius; out.dy =  dy/ radius; };
-  const up=e=>{ if(pid!==e.pointerId) return; root.releasePointerCapture(e.pointerId); pid=null; reset(); };
-  root.addEventListener('pointermove',move); root.addEventListener('pointerup',up); root.addEventListener('pointercancel',up); reset();
+
+  root.addEventListener('pointerdown',e=>{
+    e.preventDefault();
+    if(pid!==null) return;
+    root.setPointerCapture(e.pointerId);
+    pid=e.pointerId; rect=root.getBoundingClientRect(); radius=rect.width*0.5;
+    move(e);
+    out.active=true;
+  });
+
+  const move=e=>{
+    e.preventDefault();
+    if(pid!==e.pointerId) return;
+    const cx=rect.left+radius, cy=rect.top+radius;
+    const dx=e.clientX-cx, dy=e.clientY-cy;
+    const len=Math.hypot(dx,dy)||1;
+    const cl=Math.min(len, radius-20);
+    const nx=dx/len*cl, ny=dy/len*cl;
+    setKnob(nx,ny);
+    out.dx =  dx/ radius;
+    out.dy =  dy/ radius;
+  };
+
+  const up=e=>{
+    e.preventDefault();
+    if(pid!==e.pointerId) return;
+    root.releasePointerCapture(e.pointerId);
+    pid=null;
+    reset();
+  };
+
+  root.addEventListener('pointermove',move);
+  root.addEventListener('pointerup',up);
+  root.addEventListener('pointercancel',up);
+  reset();
 }
 if(isTouch){
   bindStick('joyL',leftStick); bindStick('joyR',rightStick);
-  qs('#tUp')   ?.addEventListener('touchstart',()=>tUp=true,{passive:true});
-  qs('#tUp')   ?.addEventListener('touchend',()=>tUp=false);
-  qs('#tDown') ?.addEventListener('touchstart',()=>tDown=true,{passive:true});
-  qs('#tDown') ?.addEventListener('touchend',()=>tDown=false);
-  qs('#tUse')  ?.addEventListener('touchstart',()=>interact(),{passive:true});
-  qs('#tPause')?.addEventListener('touchstart',()=>{ state.paused=!state.paused; pausePanel.classList.toggle('hidden',!state.paused); },{passive:true});
+  qs('#tUp')   ?.addEventListener('touchstart',()=>tUp=true,{passive:false});
+  qs('#tUp')   ?.addEventListener('touchend',()=>tUp=false,{passive:false});
+  qs('#tDown') ?.addEventListener('touchstart',()=>tDown=true,{passive:false});
+  qs('#tDown') ?.addEventListener('touchend',()=>tDown=false,{passive:false});
+  qs('#tUse')  ?.addEventListener('touchstart',()=>interact(),{passive:false});
+  qs('#tPause')?.addEventListener('touchstart',()=>{ state.paused=!state.paused; pausePanel.classList.toggle('hidden',!state.paused); },{passive:false});
 }
 
 /* Movement step */
@@ -384,7 +428,7 @@ function updateHUD(){ hud.classList.remove('hidden'); const rem=Math.max(0,state
 function saveScore(){ const name=(qs('#playerName').value||'Anon').slice(0,30); const row={name,score:state.score,when:Date.now()}; const key='pq3d.leaders'; const arr=JSON.parse(localStorage.getItem(key)||'[]'); arr.push(row); arr.sort((a,b)=>b.score-a.score); localStorage.setItem(key, JSON.stringify(arr.slice(0,20))); renderLeaders(); show(board); }
 function renderLeaders(){ const key='pq3d.leaders'; const arr=JSON.parse(localStorage.getItem(key)||'[]'); const ol=qs('#leaders'); ol.innerHTML = arr.map(r=>`<li>${r.name} — <b>${r.score}</b></li>`).join('') || '<li>No scores yet</li>'; }
 
-/* -------- Radar drawing (arrow flipped 180° per your request) -------- */
+/* -------- Radar drawing (arrow flipped 180°) -------- */
 function drawRadar(){
   const ctx=rctx, W=radar.width, H=radar.height, cx=W/2, cy=H/2;
   ctx.clearRect(0,0,W,H);
@@ -396,7 +440,7 @@ function drawRadar(){
   const right=new THREE.Vector3().crossVectors(fwd,new THREE.Vector3(0,1,0)).normalize();
   const yaw=Math.atan2(fwd.x,fwd.z);
 
-  // center arrow (rotated 180°)
+  // center arrow rotated 180°
   ctx.save(); ctx.translate(cx,cy); ctx.rotate(-yaw + Math.PI);
   ctx.fillStyle='#60eac2'; ctx.beginPath(); ctx.moveTo(0,-10); ctx.lineTo(-7,7); ctx.lineTo(7,7); ctx.closePath(); ctx.fill(); ctx.restore();
 
