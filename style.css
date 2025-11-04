@@ -2,6 +2,7 @@
 html,body{height:100%;margin:0;background:var(--deep);color:var(--pearl);font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Arial;overflow:hidden}
 #bg{position:fixed;inset:0;display:block;z-index:0}
 #ui{position:fixed;inset:0;pointer-events:none;z-index:10}
+/* Panels / cards */
 .panel.card{pointer-events:all;width:min(860px,92vw);padding:28px 24px;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;border-radius:28px;background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.28);box-shadow:0 18px 60px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.15)}
 .panel h1{margin:0 0 6px;font-size:56px;color:var(--sand)}
 .panel h2{margin:0 0 10px;font-size:32px;color:#fff}
@@ -9,6 +10,7 @@ html,body{height:100%;margin:0;background:var(--deep);color:var(--pearl);font-fa
 .pill.big{padding:16px 26px;font-size:18px}
 .ghost{padding:10px 16px;border-radius:999px;border:1px dashed rgba(255,255,255,.45);background:rgba(255,255,255,.06);color:#fff;cursor:pointer}
 .hidden{display:none}
+/* HUD */
 .bubblebar{position:absolute;left:16px;right:16px;top:16px;padding:12px 16px;display:flex;gap:16px;justify-content:space-between;align-items:center;pointer-events:none;background:rgba(73,153,190,.45);border:1px solid rgba(255,255,255,.18);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
 #crosshair{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:20px;opacity:.3;pointer-events:none}
 #o2bar{position:relative;width:260px;height:16px;border-radius:999px;background:rgba(255,255,255,.12);margin-top:6px;border:1px solid rgba(255,255,255,.25);overflow:hidden}
@@ -16,3 +18,24 @@ html,body{height:100%;margin:0;background:var(--deep);color:var(--pearl);font-fa
 .chip{position:absolute;right:18px;bottom:18px;background:rgba(10,44,51,.8);border:1px solid rgba(96,234,194,.35);border-radius:14px;padding:10px 14px;pointer-events:none;box-shadow:0 10px 28px rgba(0,0,0,.35)}
 #fade{position:fixed;inset:0;background:#000;opacity:0;transition:opacity .6s ease;pointer-events:none;z-index:9}
 #fade.show{opacity:1}
+/* --- Radar / Navigation HUD --- */
+#radarWrap{
+  position:absolute; right:18px; bottom:94px; width:180px; height:180px;
+  pointer-events:none; z-index:7;
+  background:rgba(10,44,51,.82);
+  border:1px solid rgba(96,234,194,.35);
+  border-radius:14px;
+  box-shadow:0 10px 28px rgba(0,0,0,.35);
+  backdrop-filter: blur(2px);
+}
+#radar{ width:100%; height:100%; display:block; }
+#legend{
+  position:absolute; right:18px; bottom:280px; z-index:7;
+  font-size:12px; opacity:.8; background:rgba(10,44,51,.7);
+  border:1px solid rgba(96,234,194,.25);
+  padding:6px 8px; border-radius:10px; pointer-events:none;
+}
+#legend b{ display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:6px; transform:translateY(1px) }
+#legend .boat{ background:#ffe28a }
+#legend .island{ background:#fff }
+#legend .pearl{ background:#b5f5ff }

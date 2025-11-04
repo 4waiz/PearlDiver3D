@@ -21,7 +21,7 @@ const hud = add(`<div id="hud" class="bubblebar hidden">
 const quest = add(`<div id="quest" class="chip hidden">Quest goes here…</div>`);
 const cross = add(`<div id="crosshair">+</div>`);
 
-/* Main menu — now with Start Game */
+/* Main menu — Start Game -> Mode select */
 const menu = add(`<div id="menu" class="panel card">
   <h1>Pearl Quest 3D</h1>
   <p class="tag">Innovate Your Heritage Game</p>
@@ -127,6 +127,16 @@ const over = add(`<div id="over" class="panel card hidden">
   </div>
 </div>`);
 
+/* Radar UI (minimap) + small legend */
+const radarWrap = add(`<div id="radarWrap"><canvas id="radar" width="180" height="180"></canvas></div>`);
+const legend = add(`<div id="legend">
+  <span><b class="boat"></b>Boat</span>&nbsp;&nbsp;
+  <span><b class="island"></b>Island</span>&nbsp;&nbsp;
+  <span><b class="pearl"></b>Pearls</span>
+</div>`);
+const radar = radarWrap.querySelector('#radar');
+const rctx  = radar.getContext('2d');
+
 /* Blue underwater tint overlay (fades in below surface) */
 const tint = document.createElement('div');
 tint.style.cssText = `position:fixed;inset:0;pointer-events:none;z-index:6;
@@ -227,6 +237,36 @@ const sail = new THREE.Mesh(new THREE.PlaneGeometry(28,16,20,1), new THREE.MeshP
 dhow.position.set(-30,1,-200); scene.add(dhow);
 const bankRing = new THREE.Mesh(new THREE.TorusGeometry(22,.7,16,64), new THREE.MeshBasicMaterial({color:0xffe28a}));
 bankRing.rotation.x=Math.PI/2; bankRing.position.set(-30,-6,-200); scene.add(bankRing);
+
+/* ------- World pins (labels) ------- */
+function labelSprite(text, color='#ffe28a'){
+  const c=document.createElement('canvas'), w=256, h=128; c.width=w; c.height=h;
+  const x=c.getContext('2d');
+  x.fillStyle='rgba(5,33,41,.6)'; x.fillRect(12,12,w-24, h-40);
+  x.strokeStyle='rgba(255,255,255,.35)'; x.lineWidth=3; x.strokeRect(12,12,w-24,h-40);
+  x.fillStyle=color; x.font='bold 42px ui-sans-serif,system-ui,Segoe UI,Roboto,Arial';
+  x.textAlign='center'; x.textBaseline='middle'; x.fillText(text,w/2,h/2);
+  const tex=new THREE.CanvasTexture(c);
+  return new THREE.Sprite(new THREE.SpriteMaterial({ map:tex, transparent:true, depthWrite:false }));
+}
+const boatPin   = labelSprite('Boat','#ffe28a'); boatPin.scale.set(28,14,1); boatPin.position.set(0,22,0); dhow.add(boatPin);
+const islandPin = labelSprite('Island','#ffffff'); islandPin.scale.set(28,14,1); islandPin.position.set(0,24,0); island.add(islandPin);
+
+/* ------- Nearest pearl beacon ------- */
+const beacon = new THREE.Mesh(
+  new THREE.CylinderGeometry(1.5,1.5,50,12,1,true),
+  new THREE.MeshBasicMaterial({ color:0x74fff2, transparent:true, opacity:0.35, side:THREE.DoubleSide })
+);
+beacon.visible=false; scene.add(beacon);
+let beaconTimer=0;
+function updateBeacon(){
+  const me=controls.getObject().position; let best=null, min=Infinity;
+  for(const pr of pearls){ if(!pr.userData.active) continue;
+    const d=pr.position.distanceTo(me); if(d<min){min=d; best=pr;}
+  }
+  if(best){ beacon.visible=true; beacon.position.copy(best.position); beacon.position.y += 25; }
+  else     { beacon.visible=false; }
+}
 
 /* Spawners */
 let oysters=[],pearls=[],jellies=[],artifacts=[],fish=[],stars=null;
@@ -410,6 +450,68 @@ function renderLeaders(){
   const ol=qs('#leaders'); ol.innerHTML = arr.map(r=>`<li>${r.name} — <b>${r.score}</b></li>`).join('') || '<li>No scores yet</li>';
 }
 
+/* ---- Radar drawing ---- */
+function drawRadar() {
+  const ctx = rctx, W = radar.width, H = radar.height, cx = W/2, cy = H/2;
+  ctx.clearRect(0,0,W,H);
+
+  // background + rings
+  ctx.fillStyle = 'rgba(4,25,31,0.65)';
+  ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle = 'rgba(96,234,194,.35)';
+  ctx.lineWidth = 2;
+  for (let i=1;i<=3;i++) {
+    ctx.beginPath();
+    ctx.arc(cx,cy,(i*cx)/3,0,Math.PI*2);
+    ctx.stroke();
+  }
+
+  // camera basis (forward & right)
+  const fwd = new THREE.Vector3();
+  controls.getDirection(fwd).normalize();          // where the camera looks
+  const right = new THREE.Vector3()
+    .crossVectors(fwd, new THREE.Vector3(0,1,0))   // right-hand vector
+    .normalize();
+
+  // player arrow (centered). "Up" = forward
+  const yaw = Math.atan2(fwd.x, fwd.z);
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(-yaw);
+  ctx.fillStyle = '#60eac2';
+  ctx.beginPath();
+  ctx.moveTo(0, -10);   // tip
+  ctx.lineTo(-7, 7);
+  ctx.lineTo(7, 7);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // project world -> radar using camera basis
+  const me = controls.getObject().position.clone();
+  const scale = 0.05;                    //  larger = tighter map
+  const radius = cx - 8;
+
+  function pipWorld(pos, color='#b5f5ff', size=4) {
+    const d = new THREE.Vector3().subVectors(pos, me);
+    const xLocal = d.dot(right);         // sideways relative to view
+    const yLocal = d.dot(fwd);           // forward/back relative to view
+    const x = cx + xLocal * scale;
+    const y = cy - yLocal * scale;       // up = forward
+    if ((x-cx)*(x-cx) + (y-cy)*(y-cy) > radius*radius) return;
+    ctx.fillStyle = color;
+    ctx.fillRect(x - size/2, y - size/2, size, size);
+  }
+
+  // boat, island, pearls
+  pipWorld(dhow.position,   '#ffe28a', 5);
+  pipWorld(island.position, '#ffffff', 5);
+  let shown = 0;
+  for (const pr of pearls) {
+    if (pr.userData.active) { pipWorld(pr.position, '#b5f5ff', 3); if (++shown > 120) break; }
+  }
+}
+
 /* Animation loop */
 function animate(){
   requestAnimationFrame(animate);
@@ -423,6 +525,10 @@ function animate(){
     jellies.forEach(j=>{ j.userData.phase+=dt*.7; j.position.y=-22+Math.sin(j.userData.phase)*4; j.position.x+=Math.sin(j.userData.phase*.6)*.12; j.position.z+=Math.cos(j.userData.phase*.5)*.12; if(j.position.distanceTo(p)<2.6){ state.oxy=Math.max(0,state.oxy-18*dt*1.5); } });
     fish.forEach(f=>{ f.userData.angle += dt*(.4 + Math.random()*.2); f.position.x += Math.cos(f.userData.angle)*dt*f.userData.speed; f.position.z += Math.sin(f.userData.angle*.9)*dt*f.userData.speed; f.position.y = f.userData.height + Math.sin(now*.001 + f.userData.sway)*2; });
     caust.material.map.offset.x += dt*0.02; caust.material.map.offset.y += dt*0.04;
+    // navigation helpers
+    beaconTimer += dt;
+    if(beaconTimer > 1.0){ updateBeacon(); beaconTimer = 0; }
+    drawRadar();
   }
   renderer.setPixelRatio(state.hq?Math.min(devicePixelRatio,2):1);
   renderer.render(scene,camera);
